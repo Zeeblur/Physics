@@ -18,7 +18,7 @@ std::vector<Link> links;
 std::vector<Link> prevLinks;
 vec3 target = vec3(6.0f, 4.0f, 0);
 float t = 0;
-float speed = 0.02;
+float speed = 0.5;
 
 void MoveTarget() {
   target = glm::ballRand((static_cast<float>(numLinks) * linkLength) * 0.6f);
@@ -63,16 +63,13 @@ bool load_content() {
 void UpdateArm()
 {
 	// if booped get position don't move target until slerp
-	cout << "update arm" << endl;
 	for (int i = 0; i < prevLinks.size(); ++i)
 	{
 		// slerp pos
-		prevLinks.at(i).m_axis = glm::slerp(prevLinks.at(i).m_axis, links.at(i).m_axis, t);
+		prevLinks[i].m_axis = glm::lerp(prevLinks[i].m_axis, links[i].m_axis, t);
 
 		// slerp rot
-		prevLinks.at(i).m_angle = glm::lerp(prevLinks.at(i).m_angle, links.at(i).m_angle, t);
-
-		prevLinks.at(i).m_worldaxis = glm::slerp(prevLinks.at(i).m_worldaxis, links.at(i).m_worldaxis, t);
+		prevLinks[i].m_angle = glm::lerp(prevLinks[i].m_angle, links[i].m_angle, t);
 
 
 		mat4 R1 = mat4_cast(angleAxis(prevLinks[i].m_angle, prevLinks[i].m_axis));
@@ -80,14 +77,16 @@ void UpdateArm()
 		prevLinks[i].m_base = mat4(1.0) * R1;
 		prevLinks[i].m_end = prevLinks[i].m_base * T1;
 		prevLinks[i].m_worldaxis = prevLinks[i].m_axis;
-		if (i > 0) {
+
+		if (i > 0)
+		{
 			// Don't move the root link.
 			prevLinks[i].m_base = prevLinks[i - 1].m_end * prevLinks[i].m_base;
 			prevLinks[i].m_end = prevLinks[i].m_base * prevLinks[i].m_end;
 			prevLinks[i].m_worldaxis = normalize(mat3(prevLinks[i - 1].m_end) * prevLinks[i].m_axis);
 		}
+
 	}
-	//prevLinks = links;
 }
 
 void UpdateIK(float delta_time)
@@ -100,16 +99,24 @@ void UpdateIK(float delta_time)
   {
 	//boop
 	  //MoveTarget();
-	  t += 10000 * delta_time;
-	  UpdateArm();
+
+	  if (t < 1)
+	  {
+		  t += speed * delta_time;
+
+		  UpdateArm();
+	  }
+	  else
+	  {
+		  MoveTarget();
+		  t = 0;
+	  }
 	  
   }
   else
   {
 	  ik_3dof_Update(target, links, linkLength);
   }
-
-  //ik_1dof_Update(target, links, linkLength);
 
 }
 
