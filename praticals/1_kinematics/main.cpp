@@ -1,4 +1,5 @@
 #include "ik.h"
+#include "matN.h"
 #include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/random.hpp>
