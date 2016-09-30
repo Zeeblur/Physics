@@ -10,11 +10,11 @@ void UpdatePhysics_Verlet(const double t, const double dt) {
   {
     // *********************************
     // calcualte velocity from current and previous position
-
+	  dvec3 vel = balls[i].position - balls[i].position_prev;
     // set previous position to current position
-
+	  balls[i].position_prev = balls[i].position;
     // position += v + a * (dt^2)
-
+	  balls[i].position += vel + (gravity * dt * dt);
     // *********************************
 
     if (balls[i].position.y <= 0.0f) {
