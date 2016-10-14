@@ -46,3 +46,5 @@ static void ik_jacob_Update(const glm::vec3 &const target, std::vector<Link> &co
 		return;
 
 }
+//static void ik_jacob_Update(const glm::dvec3 &target, std::vector<Link> &links, const double linkLength) {}
+
