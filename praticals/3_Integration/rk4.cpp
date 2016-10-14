@@ -23,7 +23,7 @@ Derivative compute(const sBall &body, const double t, const double dt, const Der
   output.dx = v;
   //what would the acceleration be at this point?
   // *********************************
-
+  output.dv = acceleration(body, x, v, t);
   // *********************************
   return output;
 }
@@ -33,13 +33,16 @@ void UpdatePhysics_rk4(const double t, const double dt) {
     Derivative a, b, c, d;
 
     //Incrementally compute for various dt
-    a = compute(balls[i], t, 0.0f, {dvec3(0), dvec3(0)});
-    b = compute(balls[i], t, dt * 0.5f, a);
+    a = compute(balls[i], t, 0.0f, {dvec3(0), dvec3(0)});  // initial pos/vel so no change
+    b = compute(balls[i], t, dt * 0.5f, a);				   // p2 etc.. p1+ v1*dt/2;
     c = compute(balls[i], t, dt * 0.5f, b);
     d = compute(balls[i], t, dt, c);
 
     //compute the final derivitive
     // *********************************
+	balls[i].position += (a.dx + (2.0 * b.dx) + (2.0 * c.dx) + d.dx) * dt / 6.0;
+	balls[i].velocity += (a.dv + (2.0 * b.dv) + (2.0 * c.dv) + d.dv) * dt / 6.0;
+
 
 
 

@@ -17,10 +17,12 @@ int numLinks = 3;
 double linkLength = 2.0f; // Length of each link
 std::vector<Link> links;
 std::vector<Link> prevLinks;
-vec3 target = vec3(6.0f, 4.0f, 0);
+dvec3 target = dvec3(6.0f, 4.0f, 0);
 float t = 0;
 float speed = 0.5;
+
 ///dvec3 target = dvec3(4.0f, 4.0f, 0);
+
 
 void MoveTarget() {
   target = glm::ballRand((static_cast<float>(numLinks) * linkLength) * 0.6f);
@@ -94,7 +96,7 @@ void UpdateIK(float delta_time)
 {
   UpdateHierarchy();
 
-  const float distance = length(vec3(links[links.size() - 1].m_end[3]) - target);
+  const float distance = length(dvec3(links[links.size() - 1].m_end[3]) - target);
 
   if (distance < 0.5f)
   {
@@ -119,25 +121,30 @@ void UpdateIK(float delta_time)
 	  ik_3dof_Update(target, links, linkLength);
   }
 
+
   /*const double distance = length(dvec3(links[links.size() - 1].m_end[3]) - target);
   if (distance < 0.5) {
     MoveTarget();
   }
   //ik_1dof_Update(target, links, linkLength);
   ik_3dof_Update(target, links, linkLength);*/
+
+
+
 }
 
 
 void RenderIK() {
   phys::DrawSphere(target, 0.2f, RED);
 
-  for (int i = 0; i < (int)links.size(); ++i) {
-    dvec3 base = links[i].m_base[3];
-    dvec3 end = links[i].m_end[3];
-    phys::DrawCube(links[i].m_base * glm::scale(dmat4(1.0), dvec3(0.5)), GREEN);
-    phys::DrawCube(links[i].m_end * glm::scale(dmat4(1.0), dvec3(0.5)), ORANGE);
+  for (int i = 0; i < (int)prevLinks.size(); ++i)
+  {
+    dvec3 base = prevLinks[i].m_base[3];
+    dvec3 end = prevLinks[i].m_end[3];
+    phys::DrawCube(prevLinks[i].m_base * glm::scale(dmat4(1.0f), dvec3(0.5f)), GREEN);
+    phys::DrawCube(prevLinks[i].m_end * glm::scale(dmat4(1.0f), dvec3(0.5f)), ORANGE);
     phys::DrawLine(base, end);
-    phys::DrawPlane(base, links[i].m_worldaxis, dvec3(0.01));
+    phys::DrawPlane(base, prevLinks[i].m_worldaxis, dvec3(0.01f));
 
   }
 }

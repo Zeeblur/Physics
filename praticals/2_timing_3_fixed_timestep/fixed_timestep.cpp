@@ -34,6 +34,7 @@ bool update(double delta_time) {
   static double t = 0.0;
   static double accumulator = 0.0;
 
+  // space to reset ball
   if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE)) {
     tp_start = chrono::high_resolution_clock::now();
     ball.position = vec3(0, fallheight, 0);
@@ -55,9 +56,9 @@ bool update(double delta_time) {
 
       // *********************************
       // Apply Accleration to Velocity
-
-      // Apply Velocity to position
-
+	  ball.velocity += gravity * delta_time;
+	  // Apply Velocity to position
+	  ball.position += ball.velocity * delta_time;
       // *********************************
 
       if (ball.position.y <= 0.0f) {

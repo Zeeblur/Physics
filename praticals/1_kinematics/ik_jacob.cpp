@@ -11,7 +11,7 @@ using namespace glm;
 int numberOfLinks = 0;
 mat4 jacobian;
 
-static void calc_jacob(const vec3 &target, std::vector<Link> &const links)
+static void calc_jacob(const glm::dvec3 &target, std::vector<Link> &const links, const double linkLength)
 {
 	// calculate jacobian for current pos
 
@@ -46,5 +46,7 @@ static void ik_jacob_Update(const glm::vec3 &const target, std::vector<Link> &co
 		return;
 
 }
+
 //static void ik_jacob_Update(const glm::dvec3 &target, std::vector<Link> &links, const double linkLength) {}
+
 

@@ -10,5 +10,5 @@ public:
 	MatN();
 	MatN(const MatN& rhs);
 
-	MatN(const vec3& row1, const vec3& row2, const vec3& row3);
+	//MatN(const vec3& row1, const vec3& row2, const vec3& row3);
 };
