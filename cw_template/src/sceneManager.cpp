@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "sceneManager.h"
 
 #include <vector>
@@ -31,6 +32,12 @@ void SceneManager::Init()
 	atomlist[0].position = dvec3(0.0, 1.0, 0.0);
 	atomlist[1].position = dvec3(1.0, 1.0, 0.0);
 	atomlist[2].position = dvec3(0.0, 2.0, 0.0);
+	atomlist[3].position = dvec3(0.0, 2.0, 0.0);
+	atomlist[4].position = dvec3(1.0, 1.0, 0.0);
+	atomlist[5].position = dvec3(0.0, 2.0, 0.0);
+	atomlist[6].position = dvec3(0.0, 2.0, 0.0);
+	atomlist[7].position = dvec3(1.0, 1.0, 0.0);
+	
 
 	phong = effect();
 	phong.add_shader("shaders/phys_basic.vert", GL_VERTEX_SHADER);
@@ -47,7 +54,7 @@ void SceneManager::Init()
 	light.set_direction(vec3(0.0f, 1.0f, 0.0f));
 	mat = material(vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), 25.0f);
 
-	//Init_Mesh();
+	Init_Mesh();
 
 	//m_vao;
 }
@@ -107,10 +114,6 @@ void SceneManager::Init_Mesh()
 		"vertex_position",
 		"transformed_normal"
 	};
-
-	// set varying attributes (outgoing)
-	//glTransformFeedbackVaryings(phong.get_program(), 2, attrib_names, GL_INTERLEAVED_ATTRIBS);
-
 	
 	// Relink program
 	glLinkProgram(phong.get_program());
@@ -134,12 +137,6 @@ void SceneManager::renderParticles()
 		1,
 		GL_FALSE,
 		value_ptr(MV));
-	/*glUniformMatrix4fv(
-		phong.get_uniform_location("P"),
-		1,
-		GL_FALSE,
-		value_ptr(P));
-		*/
 
 	auto ac = phong.get_uniform_location("MVP");
 	auto ab = phong.get_uniform_location("VP");
@@ -150,15 +147,12 @@ void SceneManager::renderParticles()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	//renderer::bind(mat, "mat");
-	//renderer::bind(light, "light");
-
 	// Bind the back particle buffer for rendering
 	glBindVertexArray(m_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
 
 	// draw
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 9);
+	glDrawArrays(GL_TRIANGLES, 0, 9);
 
 
 	// Disable vertex attribute array

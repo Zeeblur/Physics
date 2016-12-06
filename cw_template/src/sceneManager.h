@@ -16,7 +16,7 @@ class SceneManager {
 private:
 	Atom atomlist [8];
 
-	free_camera cam;
+	target_camera cam;
 	effect phong;
 	mat4 PV;
 	directional_light light;

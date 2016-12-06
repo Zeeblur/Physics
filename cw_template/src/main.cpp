@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <graphics_framework.h>
@@ -15,12 +16,6 @@ using namespace glm;
 
 
 SceneManager myMan;
-
-bool load_content()
-{
-	//phys::Init();
-	myMan = SceneManager();
-	myMan.Init();
 
 static vector<unique_ptr<Entity>> SceneList;
 static unique_ptr<Entity> floorEnt;
@@ -43,6 +38,9 @@ bool load_content()
 {
 	phys::Init();
 	
+	myMan = SceneManager();
+	myMan.Init();
+
 	// create particle add to list
 	SceneList.push_back(CreateParticle());
 	SceneList.push_back(CreateParticle());
@@ -80,11 +78,11 @@ bool update(float delta_time)
 	static float rot = 0.0f;
 	rot += 0.2f * delta_time;
 
-//	myMan.SetCameraPos(rotate(vec3(15.0f, 12.0f, 15.0f), rot, vec3(0, 1.0f, 0)));
+	myMan.SetCameraPos(rotate(vec3(15.0f, 12.0f, 15.0f), rot, vec3(0, 1.0f, 0)));
 	myMan.Update(delta_time);
 
-	//phys::SetCameraPos(rotate(vec3(15.0f, 12.0f, 15.0f), rot, vec3(0, 1.0f, 0)));
-	//phys::Update(delta_time);
+    phys::SetCameraPos(rotate(vec3(15.0f, 12.0f, 15.0f), rot, vec3(0, 1.0f, 0)));
+	phys::Update(delta_time);
 
 	//renderer::setClearColour(((float)(rand()%255))/ 255.0f, 0.3, 0.3);
 	return true;
@@ -96,11 +94,12 @@ bool render()
 	//render scene obj
 	for (auto &e : SceneList)
 	{
-		e->Render();
+	//	e->Render();
 	}
 
-	phys::DrawScene(); // draws plane for floor
+	myMan.renderParticles();
 
+	//phys::DrawScene();
 	return true;
 }
 

@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "game.h"
 #include <algorithm>
 #include <glm/gtx/transform.hpp>

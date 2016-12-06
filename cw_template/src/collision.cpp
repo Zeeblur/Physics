@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "collision.h"
 #include <glm/glm.hpp>
 
