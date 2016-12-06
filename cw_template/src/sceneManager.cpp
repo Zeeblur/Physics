@@ -1,0 +1,195 @@
+#include "sceneManager.h"
+#include <vector>
+using namespace glm;
+using namespace std;
+
+effect effG;
+
+void CheckGL() {
+	GLenum err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		printf("An OGL error has occured: %u\n", err);
+	}
+}
+
+void SceneManager::Init()
+{
+	// initialise the scene, set up shaders and stuff
+	effG = effect();
+	effG.add_shader("shaders/phys_grid.vert", GL_VERTEX_SHADER);
+	effG.add_shader("shaders/phys_grid.frag", GL_FRAGMENT_SHADER);
+	effG.build();
+	// create a line of atoms
+	for (unsigned int i = 0; i < 8; ++i)
+	{
+		atomlist[i].normal = dvec3(0.0, 1.0, 0.0);
+		atomlist[i].position = dvec3(0.0 + i, 1.0, 0.0);
+	}
+
+	//points
+	atomlist[0].position = dvec3(0.0, 1.0, 0.0);
+	atomlist[1].position = dvec3(1.0, 1.0, 0.0);
+	atomlist[2].position = dvec3(0.0, 2.0, 0.0);
+
+	phong = effect();
+	phong.add_shader("shaders/phys_basic.vert", GL_VERTEX_SHADER);
+	phong.add_shader("shaders/phys_basic.frag", GL_FRAGMENT_SHADER);
+	phong.build();
+
+	cam.set_position(vec3(10.0f, 10.0f, 10.0f));
+	cam.set_target(vec3(0.0f, 0.0f, 0.0f));
+	auto aspect = static_cast<float>(renderer::get_screen_width() / static_cast<float>(renderer::get_screen_height()));
+	cam.set_projection(quarter_pi<float>(), aspect, 2.414f, 1000.0f);
+
+	light.set_ambient_intensity(vec4(0.5f, 0.5f, 0.5f, 1.0f));
+	light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	light.set_direction(vec3(0.0f, 1.0f, 0.0f));
+	mat = material(vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), 25.0f);
+
+	//Init_Mesh();
+
+	//m_vao;
+}
+
+void SceneManager::Init_Mesh()
+{
+
+	//allocate buffer
+
+	if (m_vao == 0)
+	{
+		//generate and check for errors if vao is not gen
+		glGenVertexArrays(1, &m_vao);
+		assert(!CHECK_GL_ERROR && "Couldn't create VAO.");
+	}
+
+
+
+	// bind vao
+	glBindVertexArray(m_vao);
+
+	// generate buffers on GPU
+	glGenBuffers(1, &atom_buffer);
+	
+	// bind vbo
+	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
+
+	auto a = sizeof(atomlist);
+
+	std::vector<vec3> vf;
+	for (auto ab : atomlist) {
+		vf.push_back(ab.position);
+		vf.push_back(ab.normal);
+	}
+
+	// bind data to buffer
+	//glBufferData(GL_ARRAY_BUFFER, 8, atomlist, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vf.size() * sizeof(vec3), &vf[0], GL_DYNAMIC_DRAW);
+
+	// set incoming value expect.
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3)*2, 0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vec3)*2, (void*)sizeof(vec3));
+	glEnableVertexAttribArray(0); // pos location
+	glEnableVertexAttribArray(1); // normal loc
+
+	assert(!CHECK_GL_ERROR && "Error creating Buffer with OpenGL");
+
+	glBindVertexArray(0);
+
+	// bind effect
+	glUseProgram(phong.get_program());
+	assert(!CHECK_GL_ERROR && "ERROR PROGRAM");
+
+	// Tell OpenGL what the output looks like
+	const GLchar* attrib_names[2] =
+	{
+		"vertex_position",
+		"transformed_normal"
+	};
+
+	// set varying attributes (outgoing)
+	//glTransformFeedbackVaryings(phong.get_program(), 2, attrib_names, GL_INTERLEAVED_ATTRIBS);
+
+	
+	// Relink program
+	glLinkProgram(phong.get_program());
+	// check if buffer was created
+	assert(!CHECK_GL_ERROR && "Error creating Buffer with OpenGL");
+}
+
+
+void SceneManager::renderParticles()
+{
+	// Bind the effect
+	glUseProgram(phong.get_program());
+
+	// Set the MVP matrix
+	auto M = mat4(1.0f);
+	auto V = cam.get_view();
+	auto P = cam.get_projection();
+	auto MV = P* V * M;
+	glUniformMatrix4fv(
+		phong.get_uniform_location("MVP"),
+		1,
+		GL_FALSE,
+		value_ptr(MV));
+	/*glUniformMatrix4fv(
+		phong.get_uniform_location("P"),
+		1,
+		GL_FALSE,
+		value_ptr(P));
+		*/
+
+	auto ac = phong.get_uniform_location("MVP");
+	auto ab = phong.get_uniform_location("VP");
+	CheckGL();
+	glDepthMask(GL_FALSE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	//renderer::bind(mat, "mat");
+	//renderer::bind(light, "light");
+
+	// Bind the back particle buffer for rendering
+	glBindVertexArray(m_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
+
+	// draw
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 9);
+
+
+	// Disable vertex attribute array
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+}
+
+void SceneManager::rendershit()
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendEquation(GL_FUNC_ADD);
+	static geometry geom = geometry_builder::create_plane();
+	renderer::bind(effG);
+	auto M = glm::scale(mat4(1.0f), vec3(10.0f, 1.0, 10.0f));
+	mat3 N(1.0f);
+	mat.set_diffuse(vec4(0.4, 0.4, 0.4, 1.0));
+	renderer::bind(mat, "mat");
+	renderer::bind(light, "light");
+	glUniformMatrix4fv(effG.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(PV * M));
+	glUniformMatrix4fv(effG.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
+	glUniformMatrix3fv(effG.get_uniform_location("N"), 1, GL_FALSE, value_ptr(N));
+	renderer::render(geom);
+}
+
+void SceneManager::Update(double delta_time)
+{
+	PV = cam.get_projection() * cam.get_view();
+	cam.update(static_cast<float>(delta_time));
+}
+
+void SceneManager::SetCameraPos(const glm::vec3 &p0) {
+	cam.set_position(p0);
+	PV = cam.get_projection() * cam.get_view();
+}

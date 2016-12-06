@@ -43,7 +43,7 @@ void Init() {
 void Update(double delta_time) {
   PV = cam.get_projection() * cam.get_view();
   cam.update(static_cast<float>(delta_time));
-  renderer::setClearColour(0, 0, 0);
+  renderer::setClearColour(0.3, 0.3, 0.3);
 }
 
 const glm::vec3 UP(0, 1.0f, 0);
