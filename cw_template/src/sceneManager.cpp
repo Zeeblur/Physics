@@ -7,6 +7,9 @@ using namespace std;
 
 effect effG;
 
+// storage of indicies data
+vector<unsigned int> indices;
+
 void CheckGL() {
 	GLenum err;
 	while ((err = glGetError()) != GL_NO_ERROR) {
@@ -29,14 +32,27 @@ void SceneManager::Init()
 	}
 
 	//points
-	atomlist[0].position = dvec3(0.0, 1.0, 0.0);
-	atomlist[1].position = dvec3(1.0, 1.0, 0.0);
-	atomlist[2].position = dvec3(0.0, 2.0, 0.0);
-	atomlist[3].position = dvec3(0.0, 2.0, 0.0);
-	atomlist[4].position = dvec3(1.0, 1.0, 0.0);
-	atomlist[5].position = dvec3(0.0, 2.0, 0.0);
-	atomlist[6].position = dvec3(0.0, 2.0, 0.0);
-	atomlist[7].position = dvec3(1.0, 1.0, 0.0);
+	//atomlist[0].position = dvec3(0.0, 2.0, 0.0);
+	//atomlist[1].position = dvec3(0.0, 1.0, 0.0);
+	//atomlist[2].position = dvec3(1.0, 1.0, 0.0);
+
+	//atomlist[3].position = dvec3(1.0, 1.0, 0.0);
+	//atomlist[4].position = dvec3(1.0, 2.0, 0.0);
+	//atomlist[5].position = dvec3(0.0, 2.0, 0.0);
+
+
+	atomlist[0].position = dvec3(0.0, 2.0, 0.0);
+	atomlist[1].position = dvec3(1.0, 2.0, 0.0);
+	atomlist[2].position = dvec3(0.0, 1.0, 0.0);
+	atomlist[3].position = dvec3(1.0, 1.0, 0.0);
+
+
+	// create indicies
+	indices =
+	{ 0, 2, 3,
+	  3, 1, 0 };
+
+	
 	
 
 	phong = effect();
@@ -59,8 +75,19 @@ void SceneManager::Init()
 	//m_vao;
 }
 
+
+GLuint elementbuffer;
 void SceneManager::Init_Mesh()
 {
+
+
+	// fill "indices" as needed
+
+	// Generate a buffer for the indices
+
+	glGenBuffers(1, &elementbuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 	//allocate buffer
 
@@ -79,7 +106,7 @@ void SceneManager::Init_Mesh()
 	// generate buffers on GPU
 	glGenBuffers(1, &atom_buffer);
 	
-	// bind vbo
+	// bind vbo (this for update)
 	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
 
 	auto a = sizeof(atomlist);
@@ -91,7 +118,7 @@ void SceneManager::Init_Mesh()
 	}
 
 	// bind data to buffer
-	//glBufferData(GL_ARRAY_BUFFER, 8, atomlist, GL_DYNAMIC_DRAW);
+	// this for update
 	glBufferData(GL_ARRAY_BUFFER, vf.size() * sizeof(vec3), &vf[0], GL_DYNAMIC_DRAW);
 
 	// set incoming value expect.
@@ -152,8 +179,19 @@ void SceneManager::renderParticles()
 	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
 
 	// draw
-	glDrawArrays(GL_TRIANGLES, 0, 9);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
 
+
+	// Index buffer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
+	// Draw the triangles !
+	glDrawElements(
+		GL_TRIANGLES,      // mode
+		indices.size(),    // count
+		GL_UNSIGNED_INT,   // type
+		(void*)0           // element array buffer offset
+	);
 
 	// Disable vertex attribute array
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
