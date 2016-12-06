@@ -41,6 +41,17 @@ bool update(double delta_time) {
     e->Update(delta_time);
   }
 
+  // if space pressed launch balls
+  if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
+  {
+	 // for (auto &e : SceneList)
+	  {
+		  const auto physComp = static_cast<cPhysics *>(SceneList[0]->GetComponents("Physics").at(0));
+		  physComp->AddImpulse(vec3(10, 25, -10));
+	  }
+
+  }
+
   phys::Update(delta_time);
   return true;
 }
