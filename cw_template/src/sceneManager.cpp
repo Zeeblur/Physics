@@ -19,41 +19,33 @@ void CheckGL() {
 
 void SceneManager::Init()
 {
+
 	// initialise the scene, set up shaders and stuff
 	effG = effect();
 	effG.add_shader("shaders/phys_grid.vert", GL_VERTEX_SHADER);
 	effG.add_shader("shaders/phys_grid.frag", GL_FRAGMENT_SHADER);
 	effG.build();
 	// create a line of atoms
-	for (unsigned int i = 0; i < 8; ++i)
+	//for (unsigned int i = 0; i < 8; ++i)
+	//{
+	//	atomlist[i].normal = dvec3(0.0, 1.0, 0.0);
+	//	atomlist[i].position = dvec3(0.0 + i, 1.0, 0.0);
+	//}
+
+	// calculate width and hieght of grid
+	width = sizeof(atomlist) / sizeof(atomlist[0]);
+	height = sizeof(atomlist[0]) / sizeof(Atom);
+
+
+	// generate initial positions for grid
+	for(int n = 0; n < width; ++n)
 	{
-		atomlist[i].normal = dvec3(0.0, 1.0, 0.0);
-		atomlist[i].position = dvec3(0.0 + i, 1.0, 0.0);
+		for (int m = 0; m < height; ++m)
+		{
+			atomlist[n][m].normal = dvec3(0.0, 1.0, 0.0);
+			atomlist[n][m].position = dvec3(m, n, 0.0);
+		}
 	}
-
-	//points
-	//atomlist[0].position = dvec3(0.0, 2.0, 0.0);
-	//atomlist[1].position = dvec3(0.0, 1.0, 0.0);
-	//atomlist[2].position = dvec3(1.0, 1.0, 0.0);
-
-	//atomlist[3].position = dvec3(1.0, 1.0, 0.0);
-	//atomlist[4].position = dvec3(1.0, 2.0, 0.0);
-	//atomlist[5].position = dvec3(0.0, 2.0, 0.0);
-
-
-	atomlist[0].position = dvec3(0.0, 2.0, 0.0);
-	atomlist[1].position = dvec3(1.0, 2.0, 0.0);
-	atomlist[2].position = dvec3(0.0, 1.0, 0.0);
-	atomlist[3].position = dvec3(1.0, 1.0, 0.0);
-
-
-	// create indicies
-	indices =
-	{ 0, 2, 3,
-	  3, 1, 0 };
-
-	
-	
 
 	phong = effect();
 	phong.add_shader("shaders/phys_basic.vert", GL_VERTEX_SHADER);
@@ -70,21 +62,41 @@ void SceneManager::Init()
 	light.set_direction(vec3(0.0f, 1.0f, 0.0f));
 	mat = material(vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), 25.0f);
 
-	Init_Mesh();
 
+	// create indicies
+	generate_indices();
+
+	Init_Mesh();
 	//m_vao;
+
+
 }
 
+
+void SceneManager::generate_indices()
+{
+	// for each row 
+	for (int c = 0; c < width; ++c)
+	{
+		// for each column in the list draw squares
+		for (int r = 0; r < height -1; ++r)
+		{
+			// calculate the indices for a square
+			// clockwise order of vertex
+			indices.push_back((c * width) + r);
+			indices.push_back((c * width) + r + 1.0);
+			indices.push_back(((c + 1.0 )* width) + r + 1.0);
+			indices.push_back(((c + 1.0 )* width) + r + 1.0);
+			indices.push_back(((c + 1.0 )* width) + r);
+			indices.push_back((c * width) + r);
+		}
+	}
+}
 
 GLuint elementbuffer;
 void SceneManager::Init_Mesh()
 {
-
-
-	// fill "indices" as needed
-
 	// Generate a buffer for the indices
-
 	glGenBuffers(1, &elementbuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
@@ -111,10 +123,16 @@ void SceneManager::Init_Mesh()
 
 	auto a = sizeof(atomlist);
 
+
+	// intialise vector buffer 
 	std::vector<vec3> vf;
-	for (auto ab : atomlist) {
-		vf.push_back(ab.position);
-		vf.push_back(ab.normal);
+	for (auto &aarray : atomlist)
+	{
+		for (auto ab : aarray)
+		{
+			vf.push_back(ab.position);
+			vf.push_back(ab.normal);
+		}
 	}
 
 	// bind data to buffer

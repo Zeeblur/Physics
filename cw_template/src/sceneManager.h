@@ -14,7 +14,7 @@ struct Atom
 
 class SceneManager {
 private:
-	Atom atomlist [8];
+	Atom atomlist[6][6];
 
 	target_camera cam;
 	effect phong;
@@ -26,6 +26,9 @@ private:
 	GLuint atom_buffer;
 	GLuint m_vao;
 	void Init_Mesh();
+
+	unsigned int width;
+	unsigned int height;
 	
 
 public:
@@ -34,6 +37,7 @@ public:
 	void Update(double delta_time);
 	void SetCameraPos(const glm::vec3 &p0);
 	void rendershit();
+	void generate_indices();
 };
 
 /*
