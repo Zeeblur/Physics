@@ -6,10 +6,7 @@ using namespace glm;
 using namespace std;
 
 effect effG;
-
-// storage of indicies data
-vector<unsigned int> indices;
-
+// macro for gl check for error and println
 void CheckGL() {
 	GLenum err;
 	while ((err = glGetError()) != GL_NO_ERROR) {
@@ -25,12 +22,9 @@ void SceneManager::Init()
 	effG.add_shader("shaders/phys_grid.vert", GL_VERTEX_SHADER);
 	effG.add_shader("shaders/phys_grid.frag", GL_FRAGMENT_SHADER);
 	effG.build();
+
+
 	// create a line of atoms
-	//for (unsigned int i = 0; i < 8; ++i)
-	//{
-	//	atomlist[i].normal = dvec3(0.0, 1.0, 0.0);
-	//	atomlist[i].position = dvec3(0.0 + i, 1.0, 0.0);
-	//}
 
 	// calculate width and hieght of grid
 	width = sizeof(atomlist) / sizeof(atomlist[0]);
@@ -38,18 +32,19 @@ void SceneManager::Init()
 
 
 	// generate initial positions for grid
-	for(int n = 0; n < width; ++n)
+	for (int n = 0; n < width; ++n)
 	{
 		for (int m = 0; m < height; ++m)
 		{
 			atomlist[n][m].normal = dvec3(0.0, 1.0, 0.0);
-			atomlist[n][m].position = dvec3(m, n, 0.0);
+			atomlist[n][m].position = dvec3(n, 0.0, m);
+			atomlist[n][m].prev_pos = atomlist[n][m].position;
 		}
 	}
 
 	phong = effect();
-	phong.add_shader("shaders/phys_basic.vert", GL_VERTEX_SHADER);
-	phong.add_shader("shaders/phys_basic.frag", GL_FRAGMENT_SHADER);
+	phong.add_shader("shaders/phys_phong_new.vert", GL_VERTEX_SHADER);
+	phong.add_shader("shaders/phys_phong_new.frag", GL_FRAGMENT_SHADER);
 	phong.build();
 
 	cam.set_position(vec3(10.0f, 10.0f, 10.0f));
@@ -69,31 +64,43 @@ void SceneManager::Init()
 	Init_Mesh();
 	//m_vao;
 
+	// set clear as grey
+	renderer::setClearColour(0.3, 0.3, 0.3);
+
+
+	init_springs();
 
 }
 
+void SceneManager::init_springs()
+{
+	//springs = new vector<SpringPhys>();
+
+	SpringPhys* myfirstspring = new SpringPhys(atomlist[0][0], atomlist[0][1]);
+
+	springs.push_back(*myfirstspring);
+}
 
 void SceneManager::generate_indices()
 {
 	// for each row 
-	for (int c = 0; c < width; ++c)
+	for (int c = 0; c < width -1; ++c)
 	{
 		// for each column in the list draw squares
-		for (int r = 0; r < height -1; ++r)
+		for (int r = 0; r < height - 1; ++r)
 		{
 			// calculate the indices for a square
 			// clockwise order of vertex
 			indices.push_back((c * width) + r);
 			indices.push_back((c * width) + r + 1.0);
-			indices.push_back(((c + 1.0 )* width) + r + 1.0);
-			indices.push_back(((c + 1.0 )* width) + r + 1.0);
-			indices.push_back(((c + 1.0 )* width) + r);
+			indices.push_back(((c + 1.0)* width) + r + 1.0);
+			indices.push_back(((c + 1.0)* width) + r + 1.0);
+			indices.push_back(((c + 1.0)* width) + r);
 			indices.push_back((c * width) + r);
 		}
 	}
 }
 
-GLuint elementbuffer;
 void SceneManager::Init_Mesh()
 {
 	// Generate a buffer for the indices
@@ -117,7 +124,7 @@ void SceneManager::Init_Mesh()
 
 	// generate buffers on GPU
 	glGenBuffers(1, &atom_buffer);
-	
+
 	// bind vbo (this for update)
 	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
 
@@ -140,8 +147,8 @@ void SceneManager::Init_Mesh()
 	glBufferData(GL_ARRAY_BUFFER, vf.size() * sizeof(vec3), &vf[0], GL_DYNAMIC_DRAW);
 
 	// set incoming value expect.
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3)*2, 0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vec3)*2, (void*)sizeof(vec3));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3) * 2, 0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vec3) * 2, (void*)sizeof(vec3));
 	glEnableVertexAttribArray(0); // pos location
 	glEnableVertexAttribArray(1); // normal loc
 
@@ -159,18 +166,21 @@ void SceneManager::Init_Mesh()
 		"vertex_position",
 		"transformed_normal"
 	};
-	
+
 	// Relink program
 	glLinkProgram(phong.get_program());
 	// check if buffer was created
 	assert(!CHECK_GL_ERROR && "Error creating Buffer with OpenGL");
 }
 
-
 void SceneManager::renderParticles()
 {
 	// Bind the effect
 	glUseProgram(phong.get_program());
+	
+
+	// for debug
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Set the MVP matrix
 	auto M = mat4(1.0f);
@@ -196,10 +206,6 @@ void SceneManager::renderParticles()
 	glBindVertexArray(m_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
 
-	// draw
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
-
-
 	// Index buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
 
@@ -216,7 +222,7 @@ void SceneManager::renderParticles()
 
 }
 
-void SceneManager::rendershit()
+void SceneManager::render_floor()
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -238,83 +244,131 @@ void SceneManager::Update(double delta_time)
 {
 	PV = cam.get_projection() * cam.get_view();
 	cam.update(static_cast<float>(delta_time));
+
+	// positions of the atoms will have changed
+	// room for optimisation here
+	// update new position buffer
+	glBindBuffer(GL_ARRAY_BUFFER, atom_buffer);
+
+	// intialise vector buffer 
+	std::vector<vec3> vf;
+	for (auto &aarray : atomlist)
+	{
+		for (auto ab : aarray)
+		{
+			vf.push_back(ab.position);
+			vf.push_back(ab.normal);
+		}
+	}
+
+	// bind NEW data to buffer
+	glBufferData(GL_ARRAY_BUFFER, vf.size() * sizeof(vec3), &vf[0], GL_DYNAMIC_DRAW);
+
+	update_camera(delta_time);
+}
+
+void SceneManager::update_camera(float delta_time)
+{
+	GLFWwindow* window = renderer::get_window();
+
+	// The ratio of pixels to rotation - remember the fov
+	static double ratio_width = quarter_pi<float>() / static_cast<float>(renderer::get_screen_width());
+	static double ratio_height = (quarter_pi<float>() * (static_cast<float>(renderer::get_screen_height()) / static_cast<float>(renderer::get_screen_width()))) / static_cast<float>(renderer::get_screen_height());
+
+	double new_x = 0;
+	double new_y = 0;
+
+	glfwGetCursorPos(window, &new_x, &new_y);	// Get the current cursor position
+
+	if (firstMouse)							 // if first mouse take cursor positons from initalised vars
+	{
+		current_x = initialX;
+		current_y = initialY;
+		firstMouse = false;
+	}
+
+	double delta_x = 0;
+	double delta_y = 0;
+
+	delta_x = new_x - current_x;		 // Calculate delta of cursor positions from last frame
+	delta_y = new_y - current_y;
+
+
+	delta_x *= ratio_width;								 // Multiply deltas by ratios - gets actual change in orientation
+	delta_y *= -ratio_height;
+
+	cam.rotate((float)delta_x, (float)delta_y);     // Rotate cameras by delta :: delta_y - x-axis rotation :: delta_x - y-axis rotation
+
+	float multiplier = 100.0f;
+
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_W))
+		cam.move(vec3(0.0f, 0.0f, 1.0f)*delta_time*multiplier);
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_A))
+		cam.move(vec3(-1.0f, 0.0f, 0.0f)*delta_time*multiplier);
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_D))
+		cam.move(vec3(1.0f, 0.0f, 0.0f)*delta_time*multiplier);
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_S))
+		cam.move(vec3(0.0f, 0.0f, -1.0f)*delta_time*multiplier);
+
+
+	glfwGetCursorPos(window, &new_x, &new_y);  // update cursor pos
+	current_x = new_x;
+	current_y = new_y;
+}
+
+dvec3 SceneManager::calculate_acceleration(const Atom &a)
+{
+	// get force from spring.
+
+	// add impulse 
+
+	return a.force;
+}
+
+void SceneManager::update_grid(const double time, const double delta_time)
+{
+	// update physics
+	// collision detection
+	// collision resolution
+	// force/movement calculations
+
+	// add impulse here
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_1))
+		atomlist[0][0].force = dvec3(0.0, 0.5, 0.0);
+
+	// update spring
+	for (auto &spring : springs)
+	{
+		spring.CalculateForce();
+	}
+
+	// calculate positons for each atom.
+	for (auto &atomArray : atomlist)
+	{
+		for (auto &atom : atomArray)
+		{
+			// change atom.pos here.
+
+			// use verlet integration
+
+			// calculate acceleration from forces
+			dvec3 acc = calculate_acceleration(atom);
+
+			// calculate vel from current and previous pos
+			dvec3 velocity = atom.position - atom.prev_pos;
+
+			// set previous to current pos
+			atom.prev_pos = atom.position;
+
+			// get new position
+			atom.position += velocity + (acc * delta_time * delta_time);
+		}
+	}
+
+
 }
 
 void SceneManager::SetCameraPos(const glm::vec3 &p0) {
 	cam.set_position(p0);
 	PV = cam.get_projection() * cam.get_view();
-/*
-#include <glm/glm.hpp>
-#include <graphics_framework.h>
-
-using namespace std;
-using namespace glm;
-using namespace graphics_framework;
-
-namespace sm
-{
-	// store camera and effect instances
-	free_camera _cam;
-	effect effB;
-	effect effG;
-	effect effP;
-	mat4 PV;
-	directional_light light;
-	material mat;
-
-	//scenelist
-	vector<unique_ptr<Entity>> SceneList;
-
-	// return camera pointer
-	camera* GetCam() { return &_cam; }
-
-	// Initialse camera, lighting and effects
-	void Init()
-	{
-		effB = effect();
-		effB.add_shader("shaders/phys_basic.vert", GL_VERTEX_SHADER);
-		effB.add_shader("shaders/phys_basic.frag", GL_FRAGMENT_SHADER);
-		effB.build();
-		effP = effect();
-		effP.add_shader("shaders/phys_phong.vert", GL_VERTEX_SHADER);
-		effP.add_shader("shaders/phys_phong.frag", GL_FRAGMENT_SHADER);
-		effP.build();
-		effG = effect();
-		effG.add_shader("shaders/phys_grid.vert", GL_VERTEX_SHADER);
-		effG.add_shader("shaders/phys_grid.frag", GL_FRAGMENT_SHADER);
-		effG.build();
-		_cam.set_position(vec3(10.0f, 10.0f, 10.0f));
-		_cam.set_target(vec3(0.0f, 0.0f, 0.0f));
-		auto aspect = static_cast<float>(renderer::get_screen_width()) / static_cast<float>(renderer::get_screen_height());
-		_cam.set_projection(quarter_pi<float>(), aspect, 2.414f, 1000.0f);
-
-		light.set_ambient_intensity(vec4(0.5f, 0.5f, 0.5f, 1.0f));
-		light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
-		light.set_direction(vec3(0.0f, 1.0f, 0.0f));
-		mat = material(vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), 25.0f);
-
-	}
-	
-	// update camera
-	void Update(double delta_time)
-	{
-		// update proj/view matrix
-		PV = _cam.get_projection() * _cam.get_view();
-		_cam.update(static_cast<float>(delta_time));
-	}
-
-	unique_ptr<Entity> CreateParticle(const vec3 &pos)
-	{
-		unique_ptr<Entity> ent(new Entity());
-		ent->SetPosition(vec3(0, 5.0 + (double)(rand() % 200) / 20.0, 0));
-		//unique_ptr<Component> physComponent(new cPhysics());
-		unique_ptr<cShapeRenderer> renderComponent(new cShapeRenderer(cShapeRenderer::SPHERE));
-		renderComponent->SetColour(phys::RandomColour());
-		//ent->AddComponent(physComponent);
-		//ent->AddComponent(unique_ptr<Component>(new cSphereCollider()));
-		ent->AddComponent(unique_ptr<Component>(move(renderComponent)));
-		return ent;
-	}
-
-	*/
 }

@@ -21,6 +21,8 @@ static vector<unique_ptr<Entity>> SceneList;
 static unique_ptr<Entity> floorEnt;
 static unique_ptr<Entity> springEnt;
 
+
+
 unique_ptr<Entity> CreateParticle()
 {
 	unique_ptr<Entity> ent(new Entity());
@@ -36,7 +38,7 @@ unique_ptr<Entity> CreateParticle()
 
 bool load_content()
 {
-	phys::Init();
+	//phys::Init();
 	
 	myMan = SceneManager();
 	myMan.Init();
@@ -65,6 +67,7 @@ bool update(float delta_time)
 	while (accumulator > physics_tick)
 	{
 		UpdatePhysics(t, physics_tick);
+		myMan.update_grid(t, physics_tick);
 		accumulator -= physics_tick;
 		t += physics_tick;
 	}
@@ -75,31 +78,24 @@ bool update(float delta_time)
 		e->Update(delta_time);
 	}
 
+	// rotate camera over time
 	static float rot = 0.0f;
 	rot += 0.2f * delta_time;
 
-	myMan.SetCameraPos(rotate(vec3(15.0f, 12.0f, 15.0f), rot, vec3(0, 1.0f, 0)));
+	// update camera positions
+	//myMan.SetCameraPos(rotate(vec3(15.0f, 12.0f, 15.0f), rot, vec3(0, 1.0f, 0)));
 	myMan.Update(delta_time);
 
-    phys::SetCameraPos(rotate(vec3(15.0f, 12.0f, 15.0f), rot, vec3(0, 1.0f, 0)));
-	phys::Update(delta_time);
-
-	//renderer::setClearColour(((float)(rand()%255))/ 255.0f, 0.3, 0.3);
 	return true;
 }
 
+
 bool render()
 {
-	myMan.rendershit();
-	//render scene obj
-	for (auto &e : SceneList)
-	{
-	//	e->Render();
-	}
+	myMan.render_floor();
 
 	myMan.renderParticles();
 
-	//phys::DrawScene();
 	return true;
 }
 

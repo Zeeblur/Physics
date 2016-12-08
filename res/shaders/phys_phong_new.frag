@@ -23,15 +23,11 @@ uniform directional_light light;
 uniform material mat;
 // Position of the camera
 uniform vec3 eye_pos;
-// Texture
-//uniform sampler2D tex;
 
 // Incoming position
 layout (location = 0) in vec3 position;
 // Incoming normal
 layout (location = 1) in vec3 normal;
-// Incoming texture coordinate
-//layout (location = 2) in vec2 tex_coord;
 
 // Outgoing colour
 layout (location = 0) out vec4 colour;
@@ -58,10 +54,7 @@ void main()
 	// Calculate specular component
 	// ****************************
 	vec4 specular = (mat.specular_reflection * light.light_colour) * pow(max(dot(normal, half_vector), 0), mat.shininess);
-	// **************
-	// Sample texture
-	// **************
-	//vec4 tex_colour = texture(tex, tex_coord);
+	
 	// **********************************
 	// Calculate primary colour component
 	// **********************************
@@ -72,6 +65,5 @@ void main()
 	// **********************
 	colour = primary + specular;
 	colour.a = 1.0;
-	
-	colour = vec4(0.0, 0.0, 1.0, 1.0);
+	colour.r = 1.0;
 }
