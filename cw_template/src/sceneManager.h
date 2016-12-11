@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <graphics_framework.h>
 #include "springPhys.h"
+#include "gui.h"
 
 using namespace glm;
 using namespace graphics_framework;
@@ -14,13 +15,14 @@ struct Atom
 	dvec3 prev_pos;
 
 	dvec3 force;
+	bool constraint;
 };
 
 class SceneManager {
 private:
 
 	// function to upate these positions.
-	Atom atomlist[6][6];
+	Atom atomlist[20][20];
 
 	std::vector<SpringPhys> springs;
 
@@ -29,7 +31,6 @@ private:
 	mat4 PV;
 	directional_light light;
 	material mat;
-
 
 	// buffer for render
 	GLuint atom_buffer;

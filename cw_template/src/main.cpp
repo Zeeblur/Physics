@@ -5,7 +5,6 @@
 #include <phys_utils.h>
 
 #include "game.h"
-#include "spring.h"
 #include "physics.h"
 #include "sceneManager.h"
 

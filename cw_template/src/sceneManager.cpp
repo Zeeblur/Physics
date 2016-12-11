@@ -17,6 +17,22 @@ void CheckGL() {
 void SceneManager::Init()
 {
 
+	double xpos = 0; // create initial vars for mouse position
+	double ypos = 0;
+
+
+	// Set input mode - hide the cursor
+	GLFWwindow* window = renderer::get_window();
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+
+	// Capture initial mouse position	
+	glfwGetCursorPos(window, &xpos, &ypos);
+
+	// initialise gui
+	initialiseGUI(window);
+
 	// initialise the scene, set up shaders and stuff
 	effG = effect();
 	effG.add_shader("shaders/phys_grid.vert", GL_VERTEX_SHADER);
@@ -39,8 +55,15 @@ void SceneManager::Init()
 			atomlist[n][m].normal = dvec3(0.0, 1.0, 0.0);
 			atomlist[n][m].position = dvec3(n, 0.0, m);
 			atomlist[n][m].prev_pos = atomlist[n][m].position;
+			atomlist[n][m].constraint = false;
 		}
 	}
+	
+	atomlist[0][0].constraint = true;
+	/*atomlist[5][0].constraint = true;
+	atomlist[0][5].constraint = true;
+	atomlist[5][5].constraint = true;*/
+
 
 	phong = effect();
 	phong.add_shader("shaders/phys_phong_new.vert", GL_VERTEX_SHADER);
@@ -74,11 +97,19 @@ void SceneManager::Init()
 
 void SceneManager::init_springs()
 {
-	//springs = new vector<SpringPhys>();
+	// create a link between all atoms with springs
+	for (int n = 0; n < height; ++n)
+	{
+		for (int m = 0; m < width; ++m)
+		{
+			if (n+1 < height)
+				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n+1][m]));
 
-	SpringPhys* myfirstspring = new SpringPhys(atomlist[0][0], atomlist[0][1]);
+			if (m+1 < height)
+				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n][m+1]));
+		}
+	}
 
-	springs.push_back(*myfirstspring);
 }
 
 void SceneManager::generate_indices()
@@ -175,6 +206,9 @@ void SceneManager::Init_Mesh()
 
 void SceneManager::renderParticles()
 {
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	renderGUI();
+
 	// Bind the effect
 	glUseProgram(phong.get_program());
 	
@@ -242,6 +276,8 @@ void SceneManager::render_floor()
 
 void SceneManager::Update(double delta_time)
 {
+	updateGUI();
+
 	PV = cam.get_projection() * cam.get_view();
 	cam.update(static_cast<float>(delta_time));
 
@@ -334,7 +370,7 @@ void SceneManager::update_grid(const double time, const double delta_time)
 
 	// add impulse here
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_1))
-		atomlist[0][0].force = dvec3(0.0, 0.5, 0.0);
+		atomlist[3][3].force += dvec3(0.0, 50.0, 0.0);
 
 	// update spring
 	for (auto &spring : springs)
@@ -349,6 +385,9 @@ void SceneManager::update_grid(const double time, const double delta_time)
 		{
 			// change atom.pos here.
 
+			if (atom.constraint)
+				continue;
+
 			// use verlet integration
 
 			// calculate acceleration from forces
@@ -361,7 +400,21 @@ void SceneManager::update_grid(const double time, const double delta_time)
 			atom.prev_pos = atom.position;
 
 			// get new position
-			atom.position += velocity + (acc * delta_time * delta_time);
+			//atom.position += velocity + (acc * delta_time * delta_time);
+
+
+			// use simplectic 
+			////newPos = oldPos + dt * newVelocity
+			////newVelocity = oldVelocity + dt * acc
+
+			//dvec3 newVelocity = velocity + (delta_time * acc);
+			//atom.position += delta_time * newVelocity;
+
+			atom.position = (2.0 * atom.position) - atom.prev_pos + (pow(delta_time, 2.0) * acc);
+
+		
+			// reset force
+			atom.force = dvec3(0);
 		}
 	}
 
