@@ -5,7 +5,6 @@
 using namespace glm;
 using namespace std;
 
-effect effG;
 // macro for gl check for error and println
 void CheckGL() {
 	GLenum err;
@@ -31,7 +30,7 @@ void SceneManager::Init()
 	glfwGetCursorPos(window, &xpos, &ypos);
 
 	// initialise gui
-	initialiseGUI(window);
+	//initialiseGUI(window);
 
 	// initialise the scene, set up shaders and stuff
 	effG = effect();
@@ -48,21 +47,18 @@ void SceneManager::Init()
 
 
 	// generate initial positions for grid
-	for (int n = 0; n < width; ++n)
+	for (unsigned int n = 0; n < width; ++n)
 	{
-		for (int m = 0; m < height; ++m)
+		for (unsigned int m = 0; m < height; ++m)
 		{
 			atomlist[n][m].normal = dvec3(0.0, 1.0, 0.0);
-			atomlist[n][m].position = dvec3(n, 0.0, m);
+			atomlist[n][m].position = dvec3(n, 0.0, m);// *0.2;
 			atomlist[n][m].prev_pos = atomlist[n][m].position;
 			atomlist[n][m].constraint = false;
 		}
 	}
 	
 	atomlist[0][0].constraint = true;
-	/*atomlist[5][0].constraint = true;
-	atomlist[0][5].constraint = true;
-	atomlist[5][5].constraint = true;*/
 
 
 	phong = effect();
@@ -88,7 +84,7 @@ void SceneManager::Init()
 	//m_vao;
 
 	// set clear as grey
-	renderer::setClearColour(0.3, 0.3, 0.3);
+	renderer::setClearColour(0.3f, 0.3f, 0.3f);
 
 
 	init_springs();
@@ -98,15 +94,36 @@ void SceneManager::Init()
 void SceneManager::init_springs()
 {
 	// create a link between all atoms with springs
-	for (int n = 0; n < height; ++n)
+	for (unsigned int n = 0; n < height; ++n)
 	{
-		for (int m = 0; m < width; ++m)
+		for (unsigned int m = 0; m < width; ++m)
 		{
-			if (n+1 < height)
-				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n+1][m]));
+			bool diag = false;
 
-			if (m+1 < height)
-				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n][m+1]));
+			if (n + 1 < height)
+			{
+				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n + 1][m]));
+				diag = true;
+			}
+			else
+			{
+				diag = false;
+			}
+
+
+			if (m + 1 < height)
+			{
+				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n][m + 1]));
+				diag = true;
+			}
+			else
+			{
+				diag = false;
+			}
+
+			//if (diag)
+				//springs.push_back(SpringPhys(atomlist[n][m], atomlist[n + 1][m + 1], sqrt(2.0)));
+
 		}
 	}
 
@@ -115,19 +132,19 @@ void SceneManager::init_springs()
 void SceneManager::generate_indices()
 {
 	// for each row 
-	for (int c = 0; c < width -1; ++c)
+	for (unsigned int c = 0; c < width -1; ++c)
 	{
 		// for each column in the list draw squares
-		for (int r = 0; r < height - 1; ++r)
+		for (unsigned int r = 0; r < height - 1; ++r)
 		{
 			// calculate the indices for a square
 			// clockwise order of vertex
-			indices.push_back((c * width) + r);
-			indices.push_back((c * width) + r + 1.0);
-			indices.push_back(((c + 1.0)* width) + r + 1.0);
-			indices.push_back(((c + 1.0)* width) + r + 1.0);
-			indices.push_back(((c + 1.0)* width) + r);
-			indices.push_back((c * width) + r);
+			indices.push_back((unsigned int)(c * width) + r);
+			indices.push_back((unsigned int)(c * width) + r + 1);
+			indices.push_back((unsigned int)((c + 1.0)* width) + r + 1);
+			indices.push_back((unsigned int)((c + 1.0)* width) + r + 1);
+			indices.push_back((unsigned int)((c + 1.0)* width) + r);
+			indices.push_back((unsigned int)(c * width) + r);
 		}
 	}
 }
@@ -206,8 +223,8 @@ void SceneManager::Init_Mesh()
 
 void SceneManager::renderParticles()
 {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	renderGUI();
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//renderGUI();
 
 	// Bind the effect
 	glUseProgram(phong.get_program());
@@ -246,13 +263,15 @@ void SceneManager::renderParticles()
 	// Draw the triangles !
 	glDrawElements(
 		GL_TRIANGLES,      // mode
-		indices.size(),    // count
+		(size_t)indices.size(),    // count
 		GL_UNSIGNED_INT,   // type
 		(void*)0           // element array buffer offset
 	);
 
 	// Disable vertex attribute array
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 }
 
@@ -274,9 +293,15 @@ void SceneManager::render_floor()
 	renderer::render(geom);
 }
 
+void SceneManager::render()
+{
+	render_floor();
+	renderParticles();
+}
+
 void SceneManager::Update(double delta_time)
 {
-	updateGUI();
+	//updateGUI();
 
 	PV = cam.get_projection() * cam.get_view();
 	cam.update(static_cast<float>(delta_time));
@@ -303,7 +328,7 @@ void SceneManager::Update(double delta_time)
 	update_camera(delta_time);
 }
 
-void SceneManager::update_camera(float delta_time)
+void SceneManager::update_camera(double delta_time)
 {
 	GLFWwindow* window = renderer::get_window();
 
@@ -338,13 +363,13 @@ void SceneManager::update_camera(float delta_time)
 	float multiplier = 100.0f;
 
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_W))
-		cam.move(vec3(0.0f, 0.0f, 1.0f)*delta_time*multiplier);
+		cam.move(vec3(0.0f, 0.0f, 1.0f)*(float)delta_time*multiplier);
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_A))
-		cam.move(vec3(-1.0f, 0.0f, 0.0f)*delta_time*multiplier);
+		cam.move(vec3(-1.0f, 0.0f, 0.0f)*(float)delta_time*multiplier);
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_D))
-		cam.move(vec3(1.0f, 0.0f, 0.0f)*delta_time*multiplier);
+		cam.move(vec3(1.0f, 0.0f, 0.0f)*(float)delta_time*multiplier);
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_S))
-		cam.move(vec3(0.0f, 0.0f, -1.0f)*delta_time*multiplier);
+		cam.move(vec3(0.0f, 0.0f, -1.0f)*(float)delta_time*multiplier);
 
 
 	glfwGetCursorPos(window, &new_x, &new_y);  // update cursor pos
@@ -361,7 +386,7 @@ dvec3 SceneManager::calculate_acceleration(const Atom &a)
 	return a.force;
 }
 
-void SceneManager::update_grid(const double time, const double delta_time)
+void SceneManager::update_physics(const double time, const double delta_time)
 {
 	// update physics
 	// collision detection
@@ -370,8 +395,12 @@ void SceneManager::update_grid(const double time, const double delta_time)
 
 	// add impulse here
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_1))
+	{
 		atomlist[3][3].force += dvec3(0.0, 50.0, 0.0);
-
+		atomlist[3][4].force += dvec3(0.0, 50.0, 0.0);
+		atomlist[4][3].force += dvec3(0.0, 50.0, 0.0);
+		atomlist[4][4].force += dvec3(0.0, 50.0, 0.0);
+	}
 	// update spring
 	for (auto &spring : springs)
 	{
@@ -410,8 +439,8 @@ void SceneManager::update_grid(const double time, const double delta_time)
 			//dvec3 newVelocity = velocity + (delta_time * acc);
 			//atom.position += delta_time * newVelocity;
 
+		
 			atom.position = (2.0 * atom.position) - atom.prev_pos + (pow(delta_time, 2.0) * acc);
-
 		
 			// reset force
 			atom.force = dvec3(0);
@@ -419,9 +448,4 @@ void SceneManager::update_grid(const double time, const double delta_time)
 	}
 
 
-}
-
-void SceneManager::SetCameraPos(const glm::vec3 &p0) {
-	cam.set_position(p0);
-	PV = cam.get_projection() * cam.get_view();
 }

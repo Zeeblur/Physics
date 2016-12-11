@@ -65,5 +65,5 @@ void main()
 	// **********************
 	colour = primary + specular;
 	colour.a = 1.0;
-	colour.r = 1.0;
+	//colour.r = 1.0;
 }

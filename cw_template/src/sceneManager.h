@@ -28,6 +28,8 @@ private:
 
 	free_camera cam;
 	effect phong;
+
+	effect effG;
 	mat4 PV;
 	directional_light light;
 	material mat;
@@ -43,21 +45,28 @@ private:
 	unsigned int width;
 	unsigned int height;
 
-	float current_x, current_y, initialX, initialY;
+	// positions for the mouse movement
+	double current_x, current_y, initialX, initialY;
 	
 	bool firstMouse = true;
-	void update_camera(float delta_time);
+	void update_camera(double delta_time);
 
 	// updates positions of atoms
 	
 	// calculate acc from forces for atom
 	dvec3 calculate_acceleration(const Atom &a);
+
+	void render_floor();
+	void renderParticles();
+
 public:
 	void Init();
-	void renderParticles();
+	void render();
+
 	void Update(double delta_time);
-	void SetCameraPos(const glm::vec3 &p0);
-	void render_floor();
+
 	void generate_indices();
-	void update_grid(const double time, const double delta_time);
+	void update_physics(const double time, const double delta_time);
+
 };
+
