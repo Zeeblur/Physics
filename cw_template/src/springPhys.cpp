@@ -10,7 +10,7 @@ using namespace glm;
 SpringPhys::SpringPhys(Atom &a, Atom &b) : particleFrom(&a), particleTo(&b)
 {
 	restLength = 1.0f;
-	springConstant = 20.0f;
+	springConstant = 40.0f;
 	dampingConstant = 0.2f;
 }
 
@@ -42,7 +42,7 @@ void SpringPhys::CalculateForce()
 	dvec3 dampingforce = -closingVel * dampingConstant * edgeDir;
 
 	// add force to particles
-	particleFrom->force += force + dampingforce;
-	particleTo->force -= force + dampingforce;
+	particleFrom->force += force;// +dampingforce;
+	particleTo->force -= force;// +dampingforce;
 
 } 

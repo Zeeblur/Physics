@@ -57,9 +57,6 @@ void SceneManager::Init()
 			atomlist[n][m].constraint = false;
 		}
 	}
-	
-	atomlist[0][0].constraint = true;
-
 
 	phong = effect();
 	phong.add_shader("shaders/phys_phong_new.vert", GL_VERTEX_SHADER);
@@ -73,21 +70,23 @@ void SceneManager::Init()
 
 	light.set_ambient_intensity(vec4(0.5f, 0.5f, 0.5f, 1.0f));
 	light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	light.set_direction(vec3(0.0f, 1.0f, 0.0f));
+	light.set_direction(vec3(1.0f, 1.0f, 0.0f));
 	mat = material(vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), 25.0f);
 
 
 	// create indicies
 	generate_indices();
 
-	Init_Mesh();
-	//m_vao;
+	// create mesh
+	init_mesh();
 
 	// set clear as grey
 	renderer::setClearColour(0.3f, 0.3f, 0.3f);
 
-
+	// create springs and links between grid
 	init_springs();
+
+	init_particles();
 
 }
 
@@ -149,7 +148,7 @@ void SceneManager::generate_indices()
 	}
 }
 
-void SceneManager::Init_Mesh()
+void SceneManager::init_mesh()
 {
 	// Generate a buffer for the indices
 	glGenBuffers(1, &elementbuffer);
@@ -221,7 +220,7 @@ void SceneManager::Init_Mesh()
 	assert(!CHECK_GL_ERROR && "Error creating Buffer with OpenGL");
 }
 
-void SceneManager::renderParticles()
+void SceneManager::render_mesh()
 {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//renderGUI();
@@ -238,14 +237,30 @@ void SceneManager::renderParticles()
 	auto V = cam.get_view();
 	auto P = cam.get_projection();
 	auto MV = P* V * M;
+	auto eyeP = cam.get_position();
 	glUniformMatrix4fv(
 		phong.get_uniform_location("MVP"),
 		1,
 		GL_FALSE,
 		value_ptr(MV));
 
-	auto ac = phong.get_uniform_location("MVP");
-	auto ab = phong.get_uniform_location("VP");
+	glUniform3f(phong.get_uniform_location("eye_pos"), eyeP.x, eyeP.y, eyeP.z);
+
+	mat.set_diffuse(vec4(1.0, 0.0, 0.0, 1.0));
+
+	// bind the material
+	glUniform4fv(phong.get_uniform_location("mat.emissive"), 1, glm::value_ptr(mat.get_emissive()));
+	glUniform4fv(phong.get_uniform_location("mat.diffuse_reflection"), 1, glm::value_ptr(mat.get_diffuse()));
+	glUniform4fv(phong.get_uniform_location("mat.specular_reflection"), 1, glm::value_ptr(mat.get_specular()));
+	glUniform1f(phong.get_uniform_location("mat.shininess"), mat.get_shininess());
+
+	// bind the light
+	glUniform4fv(phong.get_uniform_location("light.ambient_intensity"), 1, glm::value_ptr(light.get_ambient_intensity()));
+
+	glUniform4fv(phong.get_uniform_location("light.light_colour"), 1, glm::value_ptr(light.get_light_colour()));
+
+	glUniform3fv(phong.get_uniform_location("light.light_dir"), 1, glm::value_ptr(light.get_direction()));
+
 	CheckGL();
 	glDepthMask(GL_FALSE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -277,6 +292,9 @@ void SceneManager::renderParticles()
 
 void SceneManager::render_floor()
 {
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBlendEquation(GL_FUNC_ADD);
@@ -287,16 +305,37 @@ void SceneManager::render_floor()
 	mat.set_diffuse(vec4(0.4, 0.4, 0.4, 1.0));
 	renderer::bind(mat, "mat");
 	renderer::bind(light, "light");
+
+
+	auto eyeP = cam.get_position();
+	glUniform3f(phong.get_uniform_location("eye_pos"), eyeP.x, eyeP.y, eyeP.z);
+
 	glUniformMatrix4fv(effG.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(PV * M));
 	glUniformMatrix4fv(effG.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
 	glUniformMatrix3fv(effG.get_uniform_location("N"), 1, GL_FALSE, value_ptr(N));
 	renderer::render(geom);
 }
 
+void SceneManager::render_particles()
+{
+	for (auto &p : particles)
+	{
+		p.render_particle(phong, PV, light);
+	}
+}
+
+void SceneManager::init_particles()
+{
+	Particle myP = Particle(dvec3(3.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
+
+	particles.push_back(myP);
+}
+
 void SceneManager::render()
 {
 	render_floor();
-	renderParticles();
+	render_mesh();
+	render_particles();
 }
 
 void SceneManager::Update(double delta_time)
@@ -429,7 +468,7 @@ void SceneManager::update_physics(const double time, const double delta_time)
 			atom.prev_pos = atom.position;
 
 			// get new position
-			//atom.position += velocity + (acc * delta_time * delta_time);
+			atom.position += velocity + (acc * delta_time * delta_time);
 
 
 			// use simplectic 
@@ -440,12 +479,52 @@ void SceneManager::update_physics(const double time, const double delta_time)
 			//atom.position += delta_time * newVelocity;
 
 		
-			atom.position = (2.0 * atom.position) - atom.prev_pos + (pow(delta_time, 2.0) * acc);
+			//atom.position = (2.0 * atom.position) - atom.prev_pos + (pow(delta_time, 2.0) * acc);
 		
 			// reset force
 			atom.force = dvec3(0);
 		}
 	}
 
+	// calculate pos for particles
+	for (auto &p : particles)
+	{
+		// calculate acceleration from forces
+		dvec3 accel = dvec3(0.0, -0.2, 0.0);
 
+		// calculate vel from current and previous pos
+		dvec3 velocity = p.get_position() - p.get_prev_position();
+
+		// set previous to current pos
+		p.set_prev_pos(p.get_position());
+
+		// get new position
+		dvec3 newPos = p.get_position() + velocity + (accel * delta_time * delta_time);
+		p.set_pos(newPos);
+
+		// reset force
+		p.clear_forces();
+
+	}
+}
+
+bool SceneManager::is_colliding()//const cSphereCollider &s, const cPlaneCollider &p, dvec3 &pos, dvec3 &norm, double &depth) {
+{
+	//const dvec3 sp = s.GetParent()->GetPosition();
+	//const dvec3 pp = p.GetParent()->GetPosition();
+
+	//// Calculate a vector from a point on the plane to the center of the sphere
+	//const dvec3 vecTemp(sp - pp);
+
+	//// Calculate the distance: dot product of the new vector with the plane's normal
+	//double distance = dot(vecTemp, p.normal);
+
+	//if (distance <= s.radius) {
+	//	norm = p.normal;
+	//	pos = sp - norm * distance;
+	//	depth = s.radius - distance;
+	//	return true;
+	//}
+
+	return false;
 }

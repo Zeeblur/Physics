@@ -4,6 +4,7 @@
 #include <graphics_framework.h>
 #include "springPhys.h"
 #include "gui.h"
+#include "Particle.h"
 
 using namespace glm;
 using namespace graphics_framework;
@@ -22,13 +23,17 @@ class SceneManager {
 private:
 
 	// function to upate these positions.
-	Atom atomlist[20][20];
+	Atom atomlist[10][10];
 
+	// store springs
 	std::vector<SpringPhys> springs;
 
+	// store particles
+	std::vector<Particle> particles;
+
+	// vars for rendering
 	free_camera cam;
 	effect phong;
-
 	effect effG;
 	mat4 PV;
 	directional_light light;
@@ -39,9 +44,8 @@ private:
 	GLuint m_vao;
 	GLuint elementbuffer;
 	std::vector<unsigned int> indices;
-	void Init_Mesh();
-	void init_springs();
 
+	// grid values for mesh
 	unsigned int width;
 	unsigned int height;
 
@@ -56,9 +60,14 @@ private:
 	// calculate acc from forces for atom
 	dvec3 calculate_acceleration(const Atom &a);
 
-	void render_floor();
-	void renderParticles();
 
+	void init_mesh();
+	void init_springs();
+	void init_particles();
+	void render_floor();
+	void render_mesh();
+	void render_particles();
+	bool is_colliding();
 public:
 	void Init();
 	void render();
