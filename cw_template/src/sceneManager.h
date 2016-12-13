@@ -5,6 +5,7 @@
 #include "springPhys.h"
 #include "gui.h"
 #include "Particle.h"
+#include "sphereCollider.h"
 
 using namespace glm;
 using namespace graphics_framework;
@@ -12,18 +13,41 @@ using namespace graphics_framework;
 struct Atom
 {
 	dvec3 position;
-	dvec3 normal;
+	dvec3 normal = dvec3(0.0, 1.0, 0.0); // default normal
 	dvec3 prev_pos;
 
 	dvec3 force;
 	bool constraint;
+
+	SphereCollider collider;
+
+	// default constructor
+	Atom(){}
+
+	// constructor
+	Atom(const dvec3 &pos, const bool &fixed) : position(pos), constraint(fixed)
+	{
+		prev_pos = pos;
+	}
+
+	void set_collider(const SphereCollider &col)
+	{
+		collider = col;
+	}
+};
+
+struct CollisionInfo
+{
+	dvec3 position;
+	dvec3 normal;
+	double depth;
 };
 
 class SceneManager {
 private:
 
 	// function to upate these positions.
-	Atom atomlist[10][10];
+	Atom atomlist[5][5];
 
 	// store springs
 	std::vector<SpringPhys> springs;

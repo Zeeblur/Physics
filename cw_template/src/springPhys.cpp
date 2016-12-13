@@ -20,7 +20,7 @@ void SpringPhys::CalculateForce()
 	dvec3 edgeDir = particleFrom->position - particleTo->position;
 
 	// get extension magnitude 
-	double extension = abs(length(edgeDir) - restLength);
+	double extension = (length(edgeDir) - restLength);
 
 	edgeDir = normalize(edgeDir);
 

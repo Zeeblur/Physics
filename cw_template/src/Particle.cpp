@@ -61,3 +61,18 @@ void Particle::clear_forces()
 {
 	force = dvec3(0);
 }
+
+double Particle::get_radius()
+{
+	return radius;
+}
+
+SphereCollider Particle::get_collider()
+{
+	return collider;
+}
+
+void Particle::set_collider(SphereCollider &col)
+{
+	collider = col;
+}

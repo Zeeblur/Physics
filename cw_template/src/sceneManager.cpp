@@ -1,6 +1,9 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "sceneManager.h"
 
+#include "sphereCollider.h"
+
+
 #include <vector>
 using namespace glm;
 using namespace std;
@@ -12,6 +15,7 @@ void CheckGL() {
 		printf("An OGL error has occured: %u\n", err);
 	}
 }
+
 
 void SceneManager::Init()
 {
@@ -51,23 +55,28 @@ void SceneManager::Init()
 	{
 		for (unsigned int m = 0; m < height; ++m)
 		{
-			atomlist[n][m].normal = dvec3(0.0, 1.0, 0.0);
-			atomlist[n][m].position = dvec3(n, 0.0, m);// *0.2;
-			atomlist[n][m].prev_pos = atomlist[n][m].position;
-			atomlist[n][m].constraint = false;
+			// create a new atom in the right position
+			atomlist[n][m] = Atom(dvec3(n, 0.0, m), false);
+
+			// attach a collider to the object
+			SphereCollider collider = SphereCollider(atomlist[n][m]);
+			atomlist[n][m].set_collider(collider);
 		}
 	}
 
+	// create shader program
 	phong = effect();
 	phong.add_shader("shaders/phys_phong_new.vert", GL_VERTEX_SHADER);
 	phong.add_shader("shaders/phys_phong_new.frag", GL_FRAGMENT_SHADER);
 	phong.build();
 
+	// set up camera
 	cam.set_position(vec3(10.0f, 10.0f, 10.0f));
 	cam.set_target(vec3(0.0f, 0.0f, 0.0f));
 	auto aspect = static_cast<float>(renderer::get_screen_width() / static_cast<float>(renderer::get_screen_height()));
 	cam.set_projection(quarter_pi<float>(), aspect, 2.414f, 1000.0f);
 
+	// set up lighiting
 	light.set_ambient_intensity(vec4(0.5f, 0.5f, 0.5f, 1.0f));
 	light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	light.set_direction(vec3(1.0f, 1.0f, 0.0f));
@@ -328,6 +337,10 @@ void SceneManager::init_particles()
 {
 	Particle myP = Particle(dvec3(3.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
 
+	// add collider to particle
+	SphereCollider col = SphereCollider(myP);
+	myP.set_collider(col);
+
 	particles.push_back(myP);
 }
 
@@ -432,6 +445,22 @@ void SceneManager::update_physics(const double time, const double delta_time)
 	// collision resolution
 	// force/movement calculations
 
+	// for each atom check if ball is colliding with it
+	for (auto &atomarray : atomlist)
+	{
+		for (auto &atom : atomarray)
+		{
+			
+			CollisionInfo temp;
+			if (atom.collider.is_colliding(&particles.at(0).get_collider(), temp))
+			{
+				// is_coll returns collision 
+				cout << temp.depth << endl;
+				cout << " COLLLLISIISOSOSOSOSNNNN " << endl;
+			}
+		}
+	}
+
 	// add impulse here
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_1))
 	{
@@ -467,10 +496,6 @@ void SceneManager::update_physics(const double time, const double delta_time)
 			// set previous to current pos
 			atom.prev_pos = atom.position;
 
-			// get new position
-			atom.position += velocity + (acc * delta_time * delta_time);
-
-
 			// use simplectic 
 			////newPos = oldPos + dt * newVelocity
 			////newVelocity = oldVelocity + dt * acc
@@ -479,7 +504,7 @@ void SceneManager::update_physics(const double time, const double delta_time)
 			//atom.position += delta_time * newVelocity;
 
 		
-			//atom.position = (2.0 * atom.position) - atom.prev_pos + (pow(delta_time, 2.0) * acc);
+			atom.position = (2.0 * atom.position) - atom.prev_pos + (pow(delta_time, 2.0) * acc);
 		
 			// reset force
 			atom.force = dvec3(0);

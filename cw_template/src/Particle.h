@@ -2,9 +2,11 @@
 
 #include <glm\glm.hpp>
 #include <graphics_framework.h>
+#include "sphereCollider.h"
 
 using namespace glm;
 using namespace graphics_framework;
+
 
 class Particle
 {
@@ -18,6 +20,8 @@ private:
 	geometry pgeom;
 	material pmat;
 
+	SphereCollider collider;
+
 public:
 	Particle(const dvec3 &pos, const double &rad, const dvec4 &col);
 	void render_particle(const effect &phong, const mat4 &projview, const directional_light &light);
@@ -27,8 +31,13 @@ public:
 	dvec3 get_prev_position();
 	void set_prev_pos(const dvec3 &pos);
 	void set_pos(const dvec3 &pos);
+	double get_radius();
 
 	// add and clear forces
 	void add_impulse(const dvec3 &impulse);
 	void clear_forces();
+
+	void set_collider(SphereCollider &col);
+	SphereCollider get_collider();
+	
 };
