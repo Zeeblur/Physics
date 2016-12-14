@@ -67,12 +67,12 @@ double Particle::get_radius()
 	return radius;
 }
 
-SphereCollider Particle::get_collider()
+SphereCollider* Particle::get_collider()
 {
-	return collider;
+	return &collider;
 }
 
-void Particle::set_collider(SphereCollider &col)
+void Particle::set_collider(SphereCollider col)
 {
 	collider = col;
 }

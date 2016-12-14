@@ -53,7 +53,7 @@ private:
 	std::vector<SpringPhys> springs;
 
 	// store particles
-	std::vector<Particle> particles;
+	std::vector<Particle*> particles;
 
 	// vars for rendering
 	free_camera cam;

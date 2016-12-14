@@ -37,7 +37,7 @@ public:
 	void add_impulse(const dvec3 &impulse);
 	void clear_forces();
 
-	void set_collider(SphereCollider &col);
-	SphereCollider get_collider();
+	void set_collider(SphereCollider col);
+	SphereCollider* get_collider();
 	
 };

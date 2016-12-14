@@ -10,10 +10,10 @@ SphereCollider::SphereCollider(Atom &a) : parentAtom(&a)
 	radius = 0.1;
 }
 
-SphereCollider::SphereCollider(Particle &p) : parentParticle(&p)
+SphereCollider::SphereCollider(Particle* p) : parentParticle(p)
 {
 	// set particle radius
-	radius = p.get_radius();
+	radius = p->get_radius();
 }
 
 // default constructor
@@ -37,7 +37,7 @@ dvec3 SphereCollider::get_parent_pos()
 
 static int count = 0;
 
-bool SphereCollider::is_colliding(SphereCollider *s, CollisionInfo &col)// dvec3 &pos, dvec3 &norm, double &depth)
+bool SphereCollider::is_colliding(SphereCollider &s, CollisionInfo &col)// dvec3 &pos, dvec3 &norm, double &depth)
 {
 	count++;
 	// takes in collision data to change and sphere to check against
@@ -45,14 +45,14 @@ bool SphereCollider::is_colliding(SphereCollider *s, CollisionInfo &col)// dvec3
 	dvec3 thisSphereP = this->get_parent_pos();
 
 	//std::cout << thisSphereP.x << " " << thisSphereP.y << " " << thisSphereP.z << std::endl;
-	dvec3 collidingSphereP = s->get_parent_pos();
+	dvec3 collidingSphereP = s.get_parent_pos();
 
 	// distance between points
 	dvec3 edgeDir = thisSphereP - collidingSphereP;
 	double distance = length(edgeDir);
 
 	// if distance is less than the radius combined collision is true
-	double radii = (this->radius + s->radius);
+	double radii = (this->radius + s.radius);
 
 	if (distance <= radii)
 	{

@@ -329,17 +329,17 @@ void SceneManager::render_particles()
 {
 	for (auto &p : particles)
 	{
-		p.render_particle(phong, PV, light);
+		p->render_particle(phong, PV, light);
 	}
 }
 
 void SceneManager::init_particles()
 {
-	Particle myP = Particle(dvec3(3.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
+	Particle* myP = new Particle(dvec3(3.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
 
 	// add collider to particle
 	SphereCollider col = SphereCollider(myP);
-	myP.set_collider(col);
+	myP->set_collider(col);
 
 	particles.push_back(myP);
 }
@@ -452,7 +452,8 @@ void SceneManager::update_physics(const double time, const double delta_time)
 		{
 			
 			CollisionInfo temp;
-			if (atom.collider.is_colliding(&particles.at(0).get_collider(), temp))
+			auto a = particles[0]->get_collider();
+			if (atom.collider.is_colliding(*particles.at(0)->get_collider(), temp))
 			{
 				// is_coll returns collision 
 				cout << temp.depth << endl;
@@ -518,17 +519,17 @@ void SceneManager::update_physics(const double time, const double delta_time)
 		dvec3 accel = dvec3(0.0, -0.2, 0.0);
 
 		// calculate vel from current and previous pos
-		dvec3 velocity = p.get_position() - p.get_prev_position();
+		dvec3 velocity = p->get_position() - p->get_prev_position();
 
 		// set previous to current pos
-		p.set_prev_pos(p.get_position());
+		p->set_prev_pos(p->get_position());
 
 		// get new position
-		dvec3 newPos = p.get_position() + velocity + (accel * delta_time * delta_time);
-		p.set_pos(newPos);
+		dvec3 newPos = p->get_position() + velocity + (accel * delta_time * delta_time);
+		p->set_pos(newPos);
 
 		// reset force
-		p.clear_forces();
+		p->clear_forces();
 
 	}
 }

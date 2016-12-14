@@ -17,8 +17,8 @@ private:
 public:
 	SphereCollider();
 	SphereCollider(Atom &a);
-	SphereCollider(Particle &p);
+	SphereCollider(Particle* p);
 
 	dvec3 get_parent_pos();
-	bool is_colliding(SphereCollider *s, CollisionInfo &col);// dvec3 &pos, dvec3 &norm, double &depth);
+	bool is_colliding(SphereCollider &s, CollisionInfo &col);// dvec3 &pos, dvec3 &norm, double &depth);
 };
