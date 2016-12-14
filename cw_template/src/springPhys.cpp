@@ -9,7 +9,7 @@ using namespace glm;
 // constructor for spring
 SpringPhys::SpringPhys(Atom &a, Atom &b) : particleFrom(&a), particleTo(&b)
 {
-	restLength = 1.0f;
+	restLength = 0.7f;
 	springConstant = 40.0f;
 	dampingConstant = 0.2f;
 }
@@ -36,13 +36,13 @@ void SpringPhys::CalculateForce()
 	// analytical approach to damping force (find closing velocity)
 	// edgedir dot v1 - egdedir dot v2
 
-	double closingVel = dot(velocityFrom, edgeDir) - dot(velocityTo, edgeDir);
+	double closingVel = dot(particleFrom->velocity, edgeDir) - dot(particleTo->velocity, edgeDir);
 	
 	// damping force is constant * velocity
 	dvec3 dampingforce = -closingVel * dampingConstant * edgeDir;
 
 	// add force to particles
-	particleFrom->force += force;// +dampingforce;
-	particleTo->force -= force;// +dampingforce;
+	particleFrom->force += force +dampingforce;
+	particleTo->force -= force +dampingforce;
 
 } 

@@ -61,8 +61,22 @@ void SceneManager::Init()
 			// attach a collider to the object
 			SphereCollider collider = SphereCollider(atomlist[n][m]);
 			atomlist[n][m].set_collider(collider);
+
+			if (n == 0)
+				atomlist[n][m].constraint = true;
+
+			if (m == 0)
+				atomlist[n][m].constraint = true;
+
+			if (n == width - 1)
+				atomlist[n][m].constraint = true;
+
+			if (m == height -1)
+				atomlist[n][m].constraint = true;
 		}
 	}
+
+	
 
 	// create shader program
 	phong = effect();
@@ -129,8 +143,8 @@ void SceneManager::init_springs()
 				diag = false;
 			}
 
-			//if (diag)
-				//springs.push_back(SpringPhys(atomlist[n][m], atomlist[n + 1][m + 1], sqrt(2.0)));
+		//	if (diag)
+			//	springs.push_back(SpringPhys(atomlist[n][m], atomlist[n + 1][m + 1]));
 
 		}
 	}
@@ -335,7 +349,7 @@ void SceneManager::render_particles()
 
 void SceneManager::init_particles()
 {
-	Particle* myP = new Particle(dvec3(3.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
+	Particle* myP = new Particle(dvec3(10.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
 
 	// add collider to particle
 	SphereCollider col = SphereCollider(myP);
@@ -438,6 +452,31 @@ dvec3 SceneManager::calculate_acceleration(const Atom &a)
 	return a.force;
 }
 
+void resolve_collison(CollisionInfo &col)
+{
+	const double coef = 0.5;
+
+	// colliding bodies
+	auto a = col.a;
+	auto p = col.p;
+
+	//cout << col.normal.x << " " << col.normal.y << " " << col.normal.z << endl;
+	//col.normal = dvec3(0, -1, 0);
+
+	auto reflection = a->velocity - 2.0  * col.normal*(dot(a->velocity, col.normal));
+	
+	// teleport ball so no collison
+	a->position = (a->position + (col.normal * col.depth * coef));
+	a->velocity += (-a->velocity + (reflection*1.0));
+
+	auto reflection2 = p->get_velocity() - 2.0  * col.normal*(dot(p->get_velocity(), col.normal));
+
+	// teleport ball so no collison
+	p->set_pos(p->get_position() + (-col.normal * col.depth * coef));
+	p->set_velocity(reflection2*coef);
+
+}
+
 void SceneManager::update_physics(const double time, const double delta_time)
 {
 	// update physics
@@ -452,15 +491,29 @@ void SceneManager::update_physics(const double time, const double delta_time)
 		{
 			
 			CollisionInfo temp;
-			auto a = particles[0]->get_collider();
+			
+			// check if colliding, pass in particle collider and temp values to be changed
 			if (atom.collider.is_colliding(*particles.at(0)->get_collider(), temp))
 			{
-				// is_coll returns collision 
-				cout << temp.depth << endl;
-				cout << " COLLLLISIISOSOSOSOSNNNN " << endl;
+				// if col is true
+				// set pointers in collision info
+				temp.a = &atom;
+				temp.p = particles[0];
+				// store info in list for resolution later
+				collisions.push_back(temp);
+				//cout << " COLLLLISIISOSOSOSOSNNNN " << endl;
 			}
 		}
 	}
+
+	// resolve collisions
+	for (auto &col : collisions)
+	{
+		resolve_collison(col);
+	}
+
+	// clear collisions after resolution
+	collisions.clear();
 
 	// add impulse here
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_1))
@@ -470,6 +523,13 @@ void SceneManager::update_physics(const double time, const double delta_time)
 		atomlist[4][3].force += dvec3(0.0, 50.0, 0.0);
 		atomlist[4][4].force += dvec3(0.0, 50.0, 0.0);
 	}
+
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
+	{
+		particles[0]->set_pos(dvec3(5.0, 10.0, 5.0));
+		particles[0]->set_velocity(dvec3(0));
+	}
+
 	// update spring
 	for (auto &spring : springs)
 	{
@@ -492,21 +552,12 @@ void SceneManager::update_physics(const double time, const double delta_time)
 			dvec3 acc = calculate_acceleration(atom);
 
 			// calculate vel from current and previous pos
-			dvec3 velocity = atom.position - atom.prev_pos;
+			//dvec3 velocity = atom.position - atom.prev_pos;
+			atom.velocity += acc * delta_time;
 
 			// set previous to current pos
-			atom.prev_pos = atom.position;
+			atom.position += atom.velocity * delta_time;
 
-			// use simplectic 
-			////newPos = oldPos + dt * newVelocity
-			////newVelocity = oldVelocity + dt * acc
-
-			//dvec3 newVelocity = velocity + (delta_time * acc);
-			//atom.position += delta_time * newVelocity;
-
-		
-			atom.position = (2.0 * atom.position) - atom.prev_pos + (pow(delta_time, 2.0) * acc);
-		
 			// reset force
 			atom.force = dvec3(0);
 		}
@@ -515,42 +566,16 @@ void SceneManager::update_physics(const double time, const double delta_time)
 	// calculate pos for particles
 	for (auto &p : particles)
 	{
-		// calculate acceleration from forces
-		dvec3 accel = dvec3(0.0, -0.2, 0.0);
+		// calculate acceleration from forces (gravity)
+		dvec3 accel = dvec3(0.0, -10.0, 0.0);
 
-		// calculate vel from current and previous pos
-		dvec3 velocity = p->get_position() - p->get_prev_position();
+		// euler int
+		p->set_velocity(p->get_velocity() + (accel * delta_time));
 
-		// set previous to current pos
-		p->set_prev_pos(p->get_position());
-
-		// get new position
-		dvec3 newPos = p->get_position() + velocity + (accel * delta_time * delta_time);
-		p->set_pos(newPos);
+		p->set_pos(p->get_position() + (p->get_velocity() * delta_time));
 
 		// reset force
 		p->clear_forces();
 
 	}
-}
-
-bool SceneManager::is_colliding()//const cSphereCollider &s, const cPlaneCollider &p, dvec3 &pos, dvec3 &norm, double &depth) {
-{
-	//const dvec3 sp = s.GetParent()->GetPosition();
-	//const dvec3 pp = p.GetParent()->GetPosition();
-
-	//// Calculate a vector from a point on the plane to the center of the sphere
-	//const dvec3 vecTemp(sp - pp);
-
-	//// Calculate the distance: dot product of the new vector with the plane's normal
-	//double distance = dot(vecTemp, p.normal);
-
-	//if (distance <= s.radius) {
-	//	norm = p.normal;
-	//	pos = sp - norm * distance;
-	//	depth = s.radius - distance;
-	//	return true;
-	//}
-
-	return false;
 }

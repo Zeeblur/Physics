@@ -14,6 +14,7 @@ private:
 	dvec3 position;
 	dvec3 prev_position;
 	dvec3 force;
+	dvec3 velocity;
 
 	double radius;  // bounding sphere
 
@@ -32,6 +33,9 @@ public:
 	void set_prev_pos(const dvec3 &pos);
 	void set_pos(const dvec3 &pos);
 	double get_radius();
+
+	dvec3 get_velocity();
+	void set_velocity(const dvec3 &vel);
 
 	// add and clear forces
 	void add_impulse(const dvec3 &impulse);

@@ -76,3 +76,13 @@ void Particle::set_collider(SphereCollider col)
 {
 	collider = col;
 }
+
+dvec3 Particle::get_velocity()
+{
+	return velocity;
+}
+
+void Particle::set_velocity(const dvec3 &vel)
+{
+	velocity = vel;
+}

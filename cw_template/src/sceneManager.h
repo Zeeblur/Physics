@@ -17,6 +17,8 @@ struct Atom
 	dvec3 prev_pos;
 
 	dvec3 force;
+
+	dvec3 velocity;
 	bool constraint;
 
 	SphereCollider collider;
@@ -41,19 +43,25 @@ struct CollisionInfo
 	dvec3 position;
 	dvec3 normal;
 	double depth;
+
+	Atom* a;
+	Particle* p;
 };
 
 class SceneManager {
 private:
 
 	// function to upate these positions.
-	Atom atomlist[5][5];
+	Atom atomlist[20][20];
 
 	// store springs
 	std::vector<SpringPhys> springs;
 
 	// store particles
 	std::vector<Particle*> particles;
+
+	// store collision data
+	std::vector<CollisionInfo> collisions;
 
 	// vars for rendering
 	free_camera cam;
