@@ -60,7 +60,6 @@ bool SphereCollider::is_colliding(SphereCollider &s, CollisionInfo &col)// dvec3
 	{
 		col.depth = radii - distance;
 		col.normal = -edgeDir;
-		col.normal.y = col.normal.y >= 0 ? 0 : col.normal.y;
 		col.position = thisSphereP - col.normal * (radius - col.depth * 0.5f);
 		return true;
 	}

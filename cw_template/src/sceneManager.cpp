@@ -466,14 +466,15 @@ void resolve_collison(CollisionInfo &col)
 	auto reflection = a->velocity - 2.0  * col.normal*(dot(a->velocity, col.normal));
 	
 	// teleport ball so no collison
-	a->position = (a->position + (col.normal * col.depth * coef));
-	a->velocity += (-a->velocity + (reflection*1.0));
+	a->position = (a->position + (-col.normal * col.depth * coef));
+	a->velocity = (col.normal*10.0);
 
 	auto reflection2 = p->get_velocity() - 2.0  * col.normal*(dot(p->get_velocity(), col.normal));
 
 	// teleport ball so no collison
-	p->set_pos(p->get_position() + (-col.normal * col.depth * coef));
-	p->set_velocity(reflection2*coef);
+	p->set_pos(p->get_position() + (col.normal * col.depth * coef));
+	// multiply by bounciness
+	p->set_velocity(reflection2);
 
 }
 
