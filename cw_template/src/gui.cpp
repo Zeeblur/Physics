@@ -2,9 +2,8 @@
 #include "gui.h"
 
 using namespace ImGui;
-
+SceneManager* mySceneMan;
 GLFWwindow* myWindow;
-static bool showMenu;
 static int keystate;
 
 static void showFrames(bool opened) {
@@ -25,8 +24,6 @@ static void showFrames(bool opened) {
 
 static void menu() {
 
-	extern SceneManager* myScene;
-
 	// 1. Show a simple window
 	// Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
 
@@ -37,66 +34,22 @@ static void menu() {
 		return;
 	}
 
-	if (ImGui::CollapsingHeader("Debug"))
+	if (ImGui::Button("Reset Ball"))
 	{
-		ImGui::Text("Optimization");
-		if (ImGui::Button("Draw Lines"))
-		{
-			//myScene->toggleDebug();
-		}
-
-		if (ImGui::Button("Fix Culling"))
-		{
-			// myScene->toggleCull();
-		}
+		mySceneMan->reset_ball();
 	}
 
-	if (ImGui::CollapsingHeader("Camera"))
+	if (ImGui::Button("Add Ball"))
 	{
-		if (ImGui::Button("Free Camera"))
-		{
-			//myScene->cam = myScene->cameraList[2];
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Point Light Camera"))
-		{
-		//	myScene->cam = myScene->cameraList[1];
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Platform Camera"))
-		{
-//1111			myScene->cam = myScene->cameraList[0];
-		}
+		mySceneMan->add_ball();
 	}
 
-
-	if (ImGui::CollapsingHeader("Post-Processing"))
+	if (ImGui::Button("Clear Balls"))
 	{
-		if (ImGui::Button("Blur"))
-		{
-			//myScene->toggleBlur();
-		}
-
-		if (ImGui::Button("Greyscale"))
-		{
-			//my/Scene->toggleGrey();
-		}
-
-		if (ImGui::Button("Vignette"))
-		{
-	//		myScene->toggleVignette();
-		}
-
-		if (ImGui::Button("Bloom"))
-		{
-		//	myScene->toggleBloom();
-		}
-
+		mySceneMan->clear_balls();
 	}
+
+	
 
 	ImGui::End();
 }
@@ -109,10 +62,10 @@ void updateGUI() {
 	menu();
 }
 
-void initialiseGUI(GLFWwindow* inwindow) {
+void initialiseGUI(GLFWwindow* inwindow, SceneManager &man) {
+	mySceneMan = &man;
 	myWindow = inwindow;
 	bool f = ImGui_ImplGlfwGL3_Init(myWindow, true);
-	showMenu = false;
 }
 
 void renderGUI() { ImGui::Render(); }

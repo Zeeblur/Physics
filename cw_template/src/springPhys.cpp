@@ -29,10 +29,6 @@ void SpringPhys::CalculateForce()
 
 	// need to account for damping force
 
-	// calculate velocities of each particle
-	dvec3 velocityFrom = particleFrom->position - particleFrom->prev_pos;
-	dvec3 velocityTo = particleTo->position - particleTo->position;
-
 	// analytical approach to damping force (find closing velocity)
 	// edgedir dot v1 - egdedir dot v2
 

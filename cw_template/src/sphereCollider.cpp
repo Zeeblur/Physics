@@ -46,9 +46,7 @@ bool SphereCollider::is_colliding(SphereCollider &s, CollisionInfo &col)// dvec3
 	dvec3 edgeDir = thisSphereP - collidingSphereP;
 	double distance = length(edgeDir);
 
-	edgeDir = normalize(edgeDir);
-	
-	
+	edgeDir = normalize(edgeDir);	
 
 	// if distance is less than the radius combined collision is true
 	double radii = (this->radius + s.radius);

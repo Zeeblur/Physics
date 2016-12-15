@@ -34,7 +34,7 @@ void SceneManager::Init()
 	glfwGetCursorPos(window, &xpos, &ypos);
 
 	// initialise gui
-	//initialiseGUI(window);
+	initialiseGUI(window, *this);
 
 	// initialise the scene, set up shaders and stuff
 	effG = effect();
@@ -62,6 +62,7 @@ void SceneManager::Init()
 			SphereCollider collider = SphereCollider(atomlist[n][m]);
 			atomlist[n][m].set_collider(collider);
 
+			// set constraints around the edge of the mesh
 			if (n == 0)
 				atomlist[n][m].constraint = true;
 
@@ -109,6 +110,7 @@ void SceneManager::Init()
 	// create springs and links between grid
 	init_springs();
 
+	// initialise particles
 	init_particles();
 
 }
@@ -120,31 +122,17 @@ void SceneManager::init_springs()
 	{
 		for (unsigned int m = 0; m < width; ++m)
 		{
-			bool diag = false;
-
+			// create vertical springs
 			if (n + 1 < height)
 			{
 				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n + 1][m]));
-				diag = true;
-			}
-			else
-			{
-				diag = false;
 			}
 
-
+			// create horizontal springs
 			if (m + 1 < height)
 			{
 				springs.push_back(SpringPhys(atomlist[n][m], atomlist[n][m + 1]));
-				diag = true;
 			}
-			else
-			{
-				diag = false;
-			}
-
-		//	if (diag)
-			//	springs.push_back(SpringPhys(atomlist[n][m], atomlist[n + 1][m + 1]));
 
 		}
 	}
@@ -245,9 +233,6 @@ void SceneManager::init_mesh()
 
 void SceneManager::render_mesh()
 {
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//renderGUI();
-
 	// Bind the effect
 	glUseProgram(phong.get_program());
 	
@@ -349,13 +334,7 @@ void SceneManager::render_particles()
 
 void SceneManager::init_particles()
 {
-	Particle* myP = new Particle(dvec3(10.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
-
-	// add collider to particle
-	SphereCollider col = SphereCollider(myP);
-	myP->set_collider(col);
-
-	particles.push_back(myP);
+	add_ball();
 }	
 
 void SceneManager::render()
@@ -363,11 +342,24 @@ void SceneManager::render()
 	render_floor();
 	render_mesh();
 	render_particles();
+
+	if (showgui)
+	{
+		// change fill mode to draw gui correctly
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		renderGUI();
+	}
 }
 
 void SceneManager::Update(double delta_time)
 {
-	//updateGUI();
+	// update gui bool
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_G))
+	{
+		showgui = !showgui;
+	}
+
+	updateGUI();
 
 	PV = cam.get_projection() * cam.get_view();
 	cam.update(static_cast<float>(delta_time));
@@ -446,13 +438,10 @@ void SceneManager::update_camera(double delta_time)
 dvec3 SceneManager::calculate_acceleration(const Atom &a)
 {
 	// get force from spring.
-
-	// add impulse 
-
 	return a.force;
 }
 
-void resolve_collison(CollisionInfo &col)
+void SceneManager::resolve_collison(CollisionInfo &col)
 {
 	const double coef = 0.5;
 
@@ -489,20 +478,24 @@ void SceneManager::update_physics(const double time, const double delta_time)
 	{
 		for (auto &atom : atomarray)
 		{
-			
-			CollisionInfo temp;
-			
-			// check if colliding, pass in particle collider and temp values to be changed
-			if (atom.collider.is_colliding(*particles.at(0)->get_collider(), temp))
+			for (auto &p : particles)
 			{
-				// if col is true
-				// set pointers in collision info
-				temp.a = &atom;
-				temp.p = particles[0];
-				// store info in list for resolution later
-				collisions.push_back(temp);
-				//cout << " COLLLLISIISOSOSOSOSNNNN " << endl;
+
+				CollisionInfo temp;
+
+				// check if colliding, pass in particle collider and temp values to be changed
+				if (atom.collider.is_colliding(*p->get_collider(), temp))
+				{
+					// if col is true
+					// set pointers in collision info
+					temp.a = &atom;
+					temp.p = p;
+					// store info in list for resolution later
+					collisions.push_back(temp);
+					//cout << " COLLLLISIISOSOSOSOSNNNN " << endl;
+				}
 			}
+
 		}
 	}
 
@@ -524,11 +517,7 @@ void SceneManager::update_physics(const double time, const double delta_time)
 		atomlist[4][4].force += dvec3(0.0, 50.0, 0.0);
 	}
 
-	if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
-	{
-		particles[0]->set_pos(dvec3(5.0, 10.0, 5.0));
-		particles[0]->set_velocity(dvec3(0));
-	}
+
 
 	// update spring
 	for (auto &spring : springs)
@@ -587,4 +576,44 @@ void SceneManager::clean_memory()
 		delete(p);
 		p = nullptr;
 	}
+
+	particles.clear();
+}
+
+void SceneManager::reset_ball()
+{
+	// reset balls
+
+	for (auto &p : particles)
+	{
+		double randloc = rand() % width;
+		p->set_pos(dvec3(randloc, 10.0, randloc));
+		p->set_velocity(dvec3(0));
+	}
+
+}
+
+void SceneManager::add_ball()
+{
+	// method to create new ball 
+	Particle* myP = new Particle(dvec3(10.0f), 1.0, dvec4(1.0f, 0.0, 0.0, 1.0f));
+
+	// add collider to particle
+	SphereCollider col = SphereCollider(myP);
+	myP->set_collider(col);
+
+	particles.push_back(myP);
+}
+
+void SceneManager::clear_balls()
+{
+	// clear ptrs
+	for (auto &p : particles)
+	{
+		delete(p);
+		p = nullptr;
+	}
+
+	particles.clear();
+	
 }

@@ -93,12 +93,15 @@ private:
 	dvec3 calculate_acceleration(const Atom &a);
 
 
+	bool showgui = false;
+
 	void init_mesh();
 	void init_springs();
 	void init_particles();
 	void render_floor();
 	void render_mesh();
 	void render_particles();
+	void resolve_collison(CollisionInfo &col);
 public:
 	void Init();
 	void render();
@@ -108,7 +111,9 @@ public:
 	void generate_indices();
 	void update_physics(const double time, const double delta_time);
 
-
+	void reset_ball();
+	void add_ball();
+	void clear_balls();
 	void clean_memory();
 };
 
