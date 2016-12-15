@@ -61,4 +61,7 @@ void main()
 	application.set_render(render);
 	// Run application
 	application.run();
+
+	// delete ptrs avoid mem leaks
+	myMan.clean_memory();
 }

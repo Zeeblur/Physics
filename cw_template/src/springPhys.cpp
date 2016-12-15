@@ -11,7 +11,7 @@ SpringPhys::SpringPhys(Atom &a, Atom &b) : particleFrom(&a), particleTo(&b)
 {
 	restLength = 0.7f;
 	springConstant = 100.0f;
-	dampingConstant = 0.9f;
+	dampingConstant = 10.0f;
 }
 
 void SpringPhys::CalculateForce()
@@ -42,7 +42,7 @@ void SpringPhys::CalculateForce()
 	dvec3 dampingforce = -closingVel * dampingConstant * edgeDir;
 
 	// add force to particles
-	particleFrom->force += force;// +dampingforce;
-	particleTo->force -= force;// +dampingforce;
+	particleFrom->force += force +dampingforce;
+	particleTo->force -= force +dampingforce;
 
 } 

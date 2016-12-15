@@ -86,3 +86,8 @@ void Particle::set_velocity(const dvec3 &vel)
 {
 	velocity = vel;
 }
+
+// deconstructor
+Particle::~Particle()
+{
+}

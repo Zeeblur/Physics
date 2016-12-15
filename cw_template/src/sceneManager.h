@@ -99,7 +99,6 @@ private:
 	void render_floor();
 	void render_mesh();
 	void render_particles();
-	bool is_colliding();
 public:
 	void Init();
 	void render();
@@ -109,5 +108,7 @@ public:
 	void generate_indices();
 	void update_physics(const double time, const double delta_time);
 
+
+	void clean_memory();
 };
 

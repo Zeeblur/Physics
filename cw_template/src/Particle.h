@@ -44,4 +44,6 @@ public:
 	void set_collider(SphereCollider col);
 	SphereCollider* get_collider();
 	
+	// deconstructor
+	~Particle();
 };

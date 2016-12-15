@@ -356,7 +356,7 @@ void SceneManager::init_particles()
 	myP->set_collider(col);
 
 	particles.push_back(myP);
-}
+}	
 
 void SceneManager::render()
 {
@@ -460,14 +460,13 @@ void resolve_collison(CollisionInfo &col)
 	auto a = col.a;
 	auto p = col.p;
 
-	//cout << col.normal.x << " " << col.normal.y << " " << col.normal.z << endl;
-	//col.normal = dvec3(0, -1, 0);
-
 	auto reflection = a->velocity - 2.0  * col.normal*(dot(a->velocity, col.normal));
 	
 	// teleport ball so no collison
 	a->position = (a->position + (-col.normal * col.depth * coef));
-	a->velocity = (col.normal*10.0);
+
+	// new velocity
+	a->velocity = (col.normal*10.0) + reflection;
 
 	auto reflection2 = p->get_velocity() - 2.0  * col.normal*(dot(p->get_velocity(), col.normal));
 
@@ -552,8 +551,7 @@ void SceneManager::update_physics(const double time, const double delta_time)
 			// calculate acceleration from forces
 			dvec3 acc = calculate_acceleration(atom);
 
-			// calculate vel from current and previous pos
-			//dvec3 velocity = atom.position - atom.prev_pos;
+			// calculate velocity
 			atom.velocity += acc * delta_time;
 
 			// set previous to current pos
@@ -578,5 +576,15 @@ void SceneManager::update_physics(const double time, const double delta_time)
 		// reset force
 		p->clear_forces();
 
+	}
+}
+
+void SceneManager::clean_memory()
+{
+	// clear ptrs
+	for (auto &p : particles)
+	{
+		delete(p);
+		p = nullptr;
 	}
 }

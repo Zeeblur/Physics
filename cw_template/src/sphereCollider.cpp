@@ -35,11 +35,8 @@ dvec3 SphereCollider::get_parent_pos()
 	return pos;
 }
 
-static int count = 0;
-
 bool SphereCollider::is_colliding(SphereCollider &s, CollisionInfo &col)// dvec3 &pos, dvec3 &norm, double &depth)
 {
-	count++;
 	// takes in collision data to change and sphere to check against
 	
 	dvec3 thisSphereP = this->get_parent_pos();
