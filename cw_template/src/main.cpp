@@ -29,6 +29,7 @@ bool update(float delta_time)
 	static double accumulator = 0.0;
 	accumulator += delta_time;
 
+	// only update once fixed timestep has been reached (1/60)
 	while (accumulator > physics_tick)
 	{
 		// update physics each tick

@@ -578,6 +578,9 @@ void SceneManager::clean_memory()
 	}
 
 	particles.clear();
+
+	// clean gui memory
+	cleanGUI();
 }
 
 void SceneManager::reset_ball()

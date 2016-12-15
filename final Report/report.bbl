@@ -1,0 +1,25 @@
+\begin{thebibliography}{\protect\citename{Kieran et~al\mbox{.} }2005}
+
+\bibitem[\protect\citename{Kieran et~al\mbox{.} }2005]{clothism}
+{\sc Kieran, E., Harrison, G., and Openshaw, L.}
+\newblock 2005.
+\newblock Cloth simulation.
+\newblock {\em MSc Computer Animation, NCCA Bournemouth University\/}, 47--61.
+
+\bibitem[\protect\citename{Mosegaard }2009]{clothforce}
+{\sc Mosegaard, J.}
+\newblock 2009.
+\newblock Mosegaards cloth simulation coding tutorial.
+\newblock {\em Computer Graphics Lab\/}.
+
+\bibitem[\protect\citename{Mueller }2014]{modes}
+{\sc Mueller, C.}
+\newblock 2014.
+\newblock Theory behind patterns formed on chladni plates?
+
+\bibitem[\protect\citename{{Omar Cornut} }2014]{imgui}
+{\sc {Omar Cornut}}.
+\newblock 2014.
+\newblock Imgui.
+
+\end{thebibliography}
